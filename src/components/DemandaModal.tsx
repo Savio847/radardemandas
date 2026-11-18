@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, RefreshCw, AlertCircle, CheckCircle2, Tag, Calendar, Building, Sparkles } from 'lucide-react';
+import { X, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
 import type { DemandaComAlerta, DemandaPayload, DemandaStatus } from '../types/demanda.ts';
 import {
   adicionarDiasIso,
@@ -10,15 +10,6 @@ import {
 } from '../utils/demandaUtils.ts';
 
 const RASCUNHO_KEY = 'radar_demandas_modal_rascunho';
-
-const CATEGORIAS_SUGESTO = [
-  '#Fiscal',
-  '#Tributário',
-  '#Trabalhista',
-  '#Societário',
-  '#Contábil',
-  '#Auditoria',
-];
 
 interface DemandaModalProps {
   aberto: boolean;
@@ -110,6 +101,7 @@ export function DemandaModal({
     }
   }, [aberto, demandaEdicao]);
 
+  // Auto-save do rascunho no cadastro novo
   useEffect(() => {
     if (!aberto || demandaEdicao || !inicializadoRef.current) return;
     try {
@@ -122,6 +114,7 @@ export function DemandaModal({
     }
   }, [aberto, demandaEdicao, razaoSocial, cnpj, titulo, descricao, responsavel, prazo, status]);
 
+  // Auto-save em tempo real durante a edição de uma demanda existente
   useEffect(() => {
     if (!aberto || !demandaEdicao || !inicializadoRef.current) return;
 
@@ -218,12 +211,6 @@ export function DemandaModal({
     await aoSalvar(payload, demandaEdicao?.id);
   };
 
-  const aplicarTagNoTitulo = (tag: string) => {
-    if (!descricao.includes(tag)) {
-      setDescricao((prev) => (prev ? `${prev} ${tag}` : tag));
-    }
-  };
-
   const mensagemErro = erroLocal || erroExterno;
 
   return (
@@ -234,26 +221,21 @@ export function DemandaModal({
       aria-labelledby="modal-demanda-titulo"
     >
       <div className="w-full max-w-xl overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-              <Sparkles className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 id="modal-demanda-titulo" className="text-base font-bold text-slate-900">
-                {demandaEdicao ? 'Editar Demanda' : 'Nova Demanda Empresarial'}
-              </h2>
-              <p className="text-xs text-slate-400">
-                {demandaEdicao
-                  ? 'Alterações salvas automaticamente na nuvem.'
-                  : 'Preencha os dados da obrigação para o radar.'}
-              </p>
-            </div>
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-6 py-4 rounded-t-3xl">
+          <div>
+            <h2 id="modal-demanda-titulo" className="text-base font-bold text-slate-900">
+              {demandaEdicao ? 'Editar Demanda' : 'Nova Demanda Empresarial'}
+            </h2>
+            <p className="mt-0.5 text-xs text-slate-400">
+              {demandaEdicao
+                ? 'Qualquer alteração válida é salva automaticamente.'
+                : 'O rascunho e o cadastro são salvos automaticamente.'}
+            </p>
           </div>
           <button
             type="button"
             onClick={aoFechar}
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
             aria-label="Fechar janela"
           >
             <X className="h-4 w-4" />
@@ -262,31 +244,11 @@ export function DemandaModal({
 
         <form onSubmit={handleSubmit} className="space-y-4 px-6 py-5">
           {mensagemErro && (
-            <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-medium text-rose-800">
+            <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs font-medium text-rose-800">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
               <span>{mensagemErro}</span>
             </div>
           )}
-
-          {/* Tags de Categoria */}
-          <div>
-            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mb-2">
-              <Tag className="h-3.5 w-3.5 text-blue-600" />
-              <span>Categorias Rápidas:</span>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {CATEGORIAS_SUGESTO.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => aplicarTagNoTitulo(tag)}
-                  className="rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-600 px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors"
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-          </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
@@ -300,7 +262,7 @@ export function DemandaModal({
                 value={razaoSocial}
                 onChange={(e) => setRazaoSocial(e.target.value)}
                 placeholder="Ex.: Horizonte Logística e Transportes Ltda."
-                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all shadow-2xs"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none shadow-2xs transition-all"
               />
             </div>
 
@@ -312,7 +274,7 @@ export function DemandaModal({
                 <button
                   type="button"
                   onClick={() => setCnpj(gerarCnpjValido())}
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-700"
                 >
                   <RefreshCw className="h-3 w-3" />
                   Gerar CNPJ válido
@@ -325,7 +287,7 @@ export function DemandaModal({
                 value={cnpj}
                 onChange={(e) => setCnpj(formatarCnpj(e.target.value))}
                 placeholder="00.000.000/0001-00"
-                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-mono text-sm tabular-nums text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all shadow-2xs"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 font-mono text-sm tabular-nums text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none shadow-2xs transition-all"
               />
               {cnpjLimpo.length === 14 && (
                 <p
@@ -348,7 +310,7 @@ export function DemandaModal({
                 value={responsavel}
                 onChange={(e) => setResponsavel(e.target.value)}
                 placeholder="Ex.: Mariana Alencar"
-                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all shadow-2xs"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none shadow-2xs transition-all"
               />
             </div>
           </div>
@@ -364,28 +326,28 @@ export function DemandaModal({
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
               placeholder="Ex.: Entrega da DCTFWeb e conferência de INSS"
-              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all shadow-2xs"
+              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none shadow-2xs transition-all"
             />
           </div>
 
           <div>
             <label htmlFor="descricao-demanda" className="block text-xs font-semibold text-slate-700">
-              Observações & Tags
+              Observações
             </label>
             <textarea
               id="descricao-demanda"
               rows={2}
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
-              placeholder="Protocolo, links internos ou detalhes da obrigação..."
-              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all shadow-2xs"
+              placeholder="Detalhes operacionais ou número de protocolo..."
+              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none shadow-2xs transition-all"
             />
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="prazo-demanda" className="block text-xs font-semibold text-slate-700">
-                Data de Vencimento *
+                Inserir Vencimento *
               </label>
               <input
                 id="prazo-demanda"
@@ -393,24 +355,44 @@ export function DemandaModal({
                 required
                 value={prazo}
                 onChange={(e) => setPrazo(e.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-mono text-sm tabular-nums text-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all shadow-2xs"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 font-mono text-sm tabular-nums text-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none shadow-2xs transition-all"
               />
               <div className="mt-2 flex flex-wrap gap-1.5">
-                {[
-                  { label: 'Hoje', dias: 0 },
-                  { label: '+2 dias', dias: 2 },
-                  { label: '+5 dias', dias: 5 },
-                  { label: '+15 dias', dias: 15 },
-                ].map((item) => (
-                  <button
-                    key={item.label}
-                    type="button"
-                    onClick={() => setPrazo(adicionarDiasIso(item.dias))}
-                    className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-medium text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                  >
-                    {item.label}
-                  </button>
-                ))}
+                <button
+                  type="button"
+                  onClick={() => setPrazo(adicionarDiasIso(-1))}
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                >
+                  Ontem
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPrazo(adicionarDiasIso(0))}
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                >
+                  Hoje
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPrazo(adicionarDiasIso(2))}
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                >
+                  +2 dias
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPrazo(adicionarDiasIso(5))}
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                >
+                  +5 dias
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPrazo(adicionarDiasIso(15))}
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                >
+                  +15 dias
+                </button>
               </div>
             </div>
 
@@ -420,7 +402,7 @@ export function DemandaModal({
                 <button
                   type="button"
                   onClick={() => setStatus('andamento')}
-                  className={`rounded-lg py-2 text-xs font-semibold transition-all ${
+                  className={`rounded-lg px-3 py-2 text-xs font-semibold transition-all whitespace-nowrap ${
                     status === 'andamento'
                       ? 'bg-blue-600 text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
@@ -431,7 +413,7 @@ export function DemandaModal({
                 <button
                   type="button"
                   onClick={() => setStatus('concluido')}
-                  className={`rounded-lg py-2 text-xs font-semibold transition-all ${
+                  className={`rounded-lg px-3 py-2 text-xs font-semibold transition-all whitespace-nowrap ${
                     status === 'concluido'
                       ? 'bg-emerald-600 text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
@@ -441,7 +423,7 @@ export function DemandaModal({
                 </button>
               </div>
               <p className="mt-2 text-[11px] text-slate-400">
-                Prazos vencidos ou críticos recebem alerta sonoro e visual automático no radar.
+                Demandas concluídas ficam em verde; em andamento próximas do prazo tremem e piscam.
               </p>
             </div>
           </div>
@@ -449,7 +431,7 @@ export function DemandaModal({
           <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
             <div className="text-xs">
               {demandaEdicao && estadoAutoSave === 'salvando' && (
-                <span className="text-slate-400">Salvando alterações...</span>
+                <span className="text-slate-400">Salvando automaticamente...</span>
               )}
               {demandaEdicao && estadoAutoSave === 'salvo' && (
                 <span className="inline-flex items-center gap-1.5 font-medium text-emerald-600">
@@ -459,23 +441,23 @@ export function DemandaModal({
               )}
             </div>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={aoFechar}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 whitespace-nowrap shrink-0 shadow-2xs"
               >
                 {demandaEdicao ? 'Fechar' : 'Cancelar'}
               </button>
               <button
                 type="submit"
                 disabled={salvando}
-                className="rounded-xl bg-blue-600 hover:bg-blue-700 px-5 py-2 text-xs font-semibold text-white shadow-sm shadow-blue-500/25 transition-all disabled:opacity-50"
+                className="rounded-xl bg-blue-600 hover:bg-blue-700 px-5 py-2 text-xs font-semibold text-white shadow-sm shadow-blue-500/25 transition-all disabled:opacity-50 whitespace-nowrap shrink-0"
               >
                 {salvando
                   ? 'Salvando...'
                   : demandaEdicao
-                    ? 'Salvar Alterações'
+                    ? 'Salvar e Fechar'
                     : 'Cadastrar Demanda'}
               </button>
             </div>

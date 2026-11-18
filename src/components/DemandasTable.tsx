@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import {
   AlertTriangle,
-  Building2,
   Calendar,
   CheckCircle2,
   Clock,
   Pencil,
   RotateCcw,
-  Sparkles,
   Trash2,
+  Building2,
 } from 'lucide-react';
 import type { DemandaComAlerta } from '../types/demanda.ts';
 import { formatarDataPtBr } from '../utils/demandaUtils.ts';
@@ -43,16 +42,13 @@ export function DemandasTable({
         <div className="divide-y divide-slate-100">
           {[1, 2, 3, 4, 5].map((item) => (
             <div key={item} className="flex items-center justify-between gap-4 px-6 py-4">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 animate-pulse rounded-xl bg-slate-100" />
-                <div className="space-y-1.5">
-                  <div className="h-4 w-44 animate-pulse rounded bg-slate-200" />
-                  <div className="h-3 w-28 animate-pulse rounded bg-slate-100" />
-                </div>
+              <div className="space-y-2">
+                <div className="h-4 w-56 animate-pulse rounded bg-slate-200" />
+                <div className="h-3 w-36 animate-pulse rounded bg-slate-100" />
               </div>
               <div className="h-4 w-48 animate-pulse rounded bg-slate-100" />
-              <div className="h-6 w-24 animate-pulse rounded-full bg-slate-100" />
-              <div className="h-8 w-24 animate-pulse rounded-xl bg-slate-100" />
+              <div className="h-4 w-28 animate-pulse rounded bg-slate-100" />
+              <div className="h-8 w-24 animate-pulse rounded bg-slate-100" />
             </div>
           ))}
         </div>
@@ -63,22 +59,21 @@ export function DemandasTable({
   if (demandas.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center shadow-xs">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-          <Clock className="h-7 w-7" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+          <Clock className="h-6 w-6" />
         </div>
         <h3 className="mt-4 text-base font-semibold text-slate-800">
           Nenhuma demanda encontrada
         </h3>
         <p className="mt-1 max-w-md text-sm text-slate-500">
-          Ajuste os filtros de busca ou cadastre uma nova obrigação com prazo e responsável.
+          Ajuste a busca por Razão Social ou CNPJ, altere o filtro de situação ou cadastre uma nova demanda com vencimento.
         </p>
         <button
           type="button"
           onClick={aoAbrirNova}
-          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/25 transition-all hover:bg-blue-700 hover:shadow-md hover:shadow-blue-500/30"
+          className="mt-5 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/25 transition-all hover:bg-blue-700 hover:shadow-md hover:shadow-blue-500/30 whitespace-nowrap"
         >
-          <Sparkles className="h-4 w-4" />
-          Cadastrar Demanda
+          Nova Demanda
         </button>
       </div>
     );
@@ -95,20 +90,20 @@ export function DemandasTable({
           role="row"
           className="grid grid-cols-12 items-center gap-4 border-b border-slate-100 bg-slate-50/70 px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400"
         >
-          <div role="columnheader" className="col-span-1">
-            ID
+          <div role="columnheader" className="col-span-3">
+            Empresa · Razão Social e CNPJ
           </div>
           <div role="columnheader" className="col-span-3">
-            Empresa / Razão Social
-          </div>
-          <div role="columnheader" className="col-span-3">
-            Demanda & Responsável
+            Demanda
           </div>
           <div role="columnheader" className="col-span-2">
             Vencimento
           </div>
           <div role="columnheader" className="col-span-1">
-            Status
+            Prazo
+          </div>
+          <div role="columnheader" className="col-span-1">
+            Situação
           </div>
           <div role="columnheader" className="col-span-2 text-right">
             Ações
@@ -116,68 +111,76 @@ export function DemandasTable({
         </div>
       </div>
 
-      <div role="rowgroup" className="divide-y divide-slate-100">
-        {demandas.map((demanda, index) => {
+      <div role="rowgroup" className="divide-y divide-slate-100 p-1">
+        {demandas.map((demanda) => {
           const isConcluido = demanda.status === 'concluido';
           const isVermelhoForte = demanda.alerta === 'vermelho_forte';
           const isVermelhoFraco = demanda.alerta === 'vermelho_fraco';
           const ocupada = atualizandoId === demanda.id;
           const editandoData = editandoVencimentoId === demanda.id;
 
-          const rowStateClass = isConcluido
+          const rowAnimationClass = isConcluido
             ? 'bg-slate-50/40 hover:bg-slate-50/80 opacity-90'
             : isVermelhoForte
-              ? 'row-blink-strong'
+              ? 'row-blink-strong rounded-xl'
               : isVermelhoFraco
-                ? 'row-blink-soft'
-                : 'hover:bg-slate-50/70';
-
-          // Visual short ID matching #83009 from the screenshot
-          const shortId = `#${(demanda.id || String(index + 1)).replace(/[^a-zA-Z0-9]/g, '').slice(-5).toUpperCase() || '830' + (index + 1)}`;
+                ? 'row-blink-soft rounded-xl'
+                : 'hover:bg-slate-50/60';
 
           return (
             <div
               key={demanda.id}
               role="row"
-              className={`grid grid-cols-1 items-center gap-3 px-6 py-3.5 text-sm transition-colors lg:grid-cols-12 lg:gap-4 ${rowStateClass}`}
+              className={`grid grid-cols-1 items-center gap-3 rounded-xl px-5 py-3.5 text-sm transition-colors lg:grid-cols-12 lg:gap-4 ${rowAnimationClass}`}
             >
-              {/* Short ID */}
-              <div role="cell" className="font-mono text-xs font-medium text-slate-400 lg:col-span-1">
-                {shortId}
-              </div>
-
-              {/* Empresa & CNPJ */}
+              {/* Razão Social e CNPJ */}
               <div role="cell" className="flex items-center gap-3 lg:col-span-3">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 font-semibold text-xs">
                   {demanda.razaoSocial ? demanda.razaoSocial.charAt(0).toUpperCase() : <Building2 className="h-4 w-4" />}
                 </div>
                 <div className="min-w-0">
-                  <div className={`truncate font-medium ${isConcluido ? 'text-slate-500 line-through' : 'text-slate-900'}`}>
+                  <div
+                    className={`truncate font-medium ${
+                      isConcluido ? 'text-slate-500 line-through' : 'text-slate-900'
+                    }`}
+                  >
                     {demanda.razaoSocial}
                   </div>
-                  <div className="font-mono text-[11px] text-slate-400 tabular-nums">
+                  <div
+                    className={`mt-0.5 font-mono text-xs tabular-nums ${
+                      isConcluido ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                  >
                     {demanda.cnpj}
                   </div>
                 </div>
               </div>
 
-              {/* Demanda & Responsável */}
+              {/* Demanda, Responsável e Observações */}
               <div role="cell" className="min-w-0 lg:col-span-3">
-                <div className={`truncate font-medium ${isConcluido ? 'text-slate-500' : 'text-slate-800'}`}>
+                <div
+                  className={`truncate font-medium ${
+                    isConcluido ? 'text-slate-500' : 'text-slate-900'
+                  }`}
+                >
                   {demanda.titulo}
                 </div>
-                <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                <div
+                  className={`mt-0.5 flex items-center gap-1.5 text-xs ${
+                    isConcluido ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
                   <span className="truncate">{demanda.responsavel || 'Equipe'}</span>
                   {demanda.descricao && (
                     <>
-                      <span aria-hidden="true">·</span>
+                      <span aria-hidden="true" className="text-slate-300">·</span>
                       <span className="truncate max-w-[140px]">{demanda.descricao}</span>
                     </>
                   )}
                 </div>
               </div>
 
-              {/* Vencimento */}
+              {/* Vencimento com Edição Rápida */}
               <div role="cell" className="whitespace-nowrap lg:col-span-2">
                 {editandoData ? (
                   <input
@@ -193,15 +196,15 @@ export function DemandasTable({
                       setEditandoVencimentoId(null);
                     }}
                     onBlur={() => setEditandoVencimentoId(null)}
-                    className="h-8 rounded-lg border border-blue-400 bg-white px-2.5 font-mono text-xs tabular-nums text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                    aria-label={`Alterar vencimento para ${demanda.titulo}`}
+                    className="h-8 rounded-lg border border-blue-400 bg-white px-2.5 font-mono text-xs tabular-nums text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                    aria-label={`Inserir vencimento para ${demanda.titulo}`}
                   />
                 ) : (
                   <button
                     type="button"
                     onClick={() => setEditandoVencimentoId(demanda.id)}
-                    title="Clique para alterar vencimento"
-                    className="group inline-flex items-center gap-1.5 rounded-lg border border-slate-200/80 bg-white px-2.5 py-1.5 font-mono text-xs text-slate-600 transition-colors hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600 shadow-2xs"
+                    title="Clique para inserir ou alterar vencimento"
+                    className="group inline-flex items-center gap-1.5 rounded-lg border border-slate-200/80 bg-white px-2.5 py-1.5 font-mono text-xs tabular-nums transition-colors hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600 shadow-2xs"
                   >
                     <Calendar className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-500" />
                     <span>{formatarDataPtBr(demanda.prazo)}</span>
@@ -209,27 +212,53 @@ export function DemandasTable({
                 )}
               </div>
 
-              {/* Status / Alerta Badge */}
+              {/* Prazo / Alertas */}
+              <div role="cell" className="whitespace-nowrap lg:col-span-1">
+                {isVermelhoForte && (
+                  <div className="flex items-center gap-1.5 text-rose-700">
+                    <span
+                      className="dot-blink-strong inline-block h-2 w-2 shrink-0 rounded-full"
+                      aria-hidden="true"
+                    />
+                    <div className="flex items-center gap-1 text-xs font-semibold">
+                      <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-rose-600" />
+                      <span>{demanda.alertaLabel}</span>
+                    </div>
+                  </div>
+                )}
+
+                {isVermelhoFraco && (
+                  <div className="flex items-center gap-1.5 text-amber-700">
+                    <span
+                      className="dot-blink-soft inline-block h-2 w-2 shrink-0 rounded-full"
+                      aria-hidden="true"
+                    />
+                    <span className="text-xs font-semibold">{demanda.alertaLabel}</span>
+                  </div>
+                )}
+
+                {!isVermelhoForte && !isVermelhoFraco && (
+                  <span
+                    className={`text-xs ${
+                      isConcluido ? 'font-medium text-emerald-700' : 'text-slate-500'
+                    }`}
+                  >
+                    {isConcluido ? 'Concluída' : demanda.alertaLabel}
+                  </span>
+                )}
+              </div>
+
+              {/* Situação */}
               <div role="cell" className="whitespace-nowrap lg:col-span-1">
                 {isConcluido ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-600">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    Concluído
-                  </span>
-                ) : isVermelhoForte ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-semibold text-rose-600">
-                    <AlertTriangle className="h-3 w-3" />
-                    {demanda.alertaLabel || 'Crítico'}
-                  </span>
-                ) : isVermelhoFraco ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
-                    <Clock className="h-3 w-3" />
-                    {demanda.alertaLabel || 'Atenção'}
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                    Concluída
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-600">
-                    <Clock className="h-3 w-3" />
-                    Em dia
+                    <Clock className="h-3 w-3 shrink-0" />
+                    Andamento
                   </span>
                 )}
               </div>
@@ -240,7 +269,7 @@ export function DemandasTable({
                   type="button"
                   disabled={ocupada}
                   onClick={() => aoAlternarStatus(demanda)}
-                  className={`inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium transition-all ${
+                  className={`inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-medium transition-all whitespace-nowrap disabled:opacity-50 ${
                     isConcluido
                       ? 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                       : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs'
@@ -265,8 +294,8 @@ export function DemandasTable({
                   disabled={ocupada}
                   onClick={() => aoEditar(demanda)}
                   aria-label={`Editar demanda ${demanda.titulo}`}
-                  title="Editar dados da demanda"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+                  title="Editar demanda"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
@@ -280,9 +309,9 @@ export function DemandasTable({
                         await aoExcluir(demanda.id);
                         setConfirmarExclusaoId(null);
                       }}
-                      className="inline-flex h-8 items-center rounded-lg bg-rose-600 px-2.5 text-xs font-medium text-white hover:bg-rose-700 shadow-2xs"
+                      className="inline-flex h-8 items-center rounded-lg bg-rose-600 px-2.5 text-xs font-medium text-white hover:bg-rose-700 whitespace-nowrap shadow-2xs"
                     >
-                      Excluir
+                      Confirmar
                     </button>
                     <button
                       type="button"
@@ -299,7 +328,7 @@ export function DemandasTable({
                     onClick={() => setConfirmarExclusaoId(demanda.id)}
                     aria-label={`Excluir demanda ${demanda.titulo}`}
                     title="Excluir demanda"
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
