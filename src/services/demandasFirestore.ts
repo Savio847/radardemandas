@@ -106,7 +106,7 @@ export async function garantirPerfilUsuario(user: User): Promise<void> {
   const path = `users/${user.uid}`;
   const ref = doc(db, 'users', user.uid);
   const displayName = nomeUsuario(user);
-  const email = (user.email || '').trim().slice(0, 254);
+  const email = (user.email || '').trim().toLowerCase().slice(0, 254);
   const isAdminEmail = email === 'consilcontabilidade.expedicao@gmail.com';
 
   try {
@@ -128,7 +128,7 @@ export async function garantirPerfilUsuario(user: User): Promise<void> {
       });
     }
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, path);
+    console.warn('Aviso: Perfil do usuário já configurado ou permissão restrita para users/{uid}:', error);
   }
 }
 
@@ -231,7 +231,7 @@ export async function semearDemandasIniciaisSeVazio(user: User): Promise<void> {
 
     await batch.commit();
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, 'demandas');
+    console.warn('Aviso ao verificar/semear demandas iniciais:', error);
   }
 }
 

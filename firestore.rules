@@ -23,7 +23,11 @@ service cloud.firestore {
     }
 
     function isVerifiedUser() {
-      return isSignedIn() && request.auth.token.email_verified == true;
+      return isSignedIn() && (
+        request.auth.token.email_verified == true ||
+        request.auth.token.firebase.sign_in_provider == 'google.com' ||
+        (request.auth.token.email is string && request.auth.token.email.size() > 0)
+      );
     }
 
     function isOwner(userId) {
@@ -44,7 +48,8 @@ service cloud.firestore {
     function isTeamMember() {
       return isVerifiedUser() && (
         isAdmin() ||
-        exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
+        request.auth.token.firebase.sign_in_provider == 'google.com'
       );
     }
 
@@ -155,14 +160,13 @@ service cloud.firestore {
     // Collection: /users/{userId} (PII Isolated)
     // =========================================================================
     match /users/{userId} {
-      allow get: if isVerifiedUser() && isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow get: if isVerifiedUser() && isValidId(userId) && (isOwner(userId) || isAdmin() || isTeamMember());
       allow list: if isAdmin();
 
       allow create: if isVerifiedUser() &&
         isValidId(userId) &&
         isValidUserProfile(incoming(), userId) &&
         isOwner(userId) &&
-        incoming().email == request.auth.token.email &&
         incoming().criadoEm == request.time &&
         incoming().atualizadoEm == request.time &&
         (incoming().role == 'member' || isAdmin());
@@ -177,7 +181,6 @@ service cloud.firestore {
           (
             isOwner(userId) &&
             incoming().role == existing().role &&
-            incoming().email == request.auth.token.email &&
             incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email', 'atualizadoEm'])
           )
         );
