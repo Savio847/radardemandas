@@ -17,6 +17,7 @@ import {
   LayoutDashboard,
   LogOut,
   Plus,
+  Printer,
   RefreshCw,
   Search,
   Sparkles,
@@ -470,6 +471,10 @@ export default function App() {
     }
   };
 
+  const handleImprimirRelatorio = () => {
+    window.print();
+  };
+
   if (erroFatalFirestore) {
     throw erroFatalFirestore;
   }
@@ -488,7 +493,7 @@ export default function App() {
   return (
     <div className="relative min-h-screen bg-[#f4f7fb] text-slate-800">
       {/* Header Superior Moderno */}
-      <header className="sticky top-0 z-20 border-b border-slate-100 bg-white/95 backdrop-blur-xs">
+      <header className="sticky top-0 z-20 border-b border-slate-100 bg-white/95 backdrop-blur-xs print:hidden">
         <div className="mx-auto flex h-16 max-w-[1320px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           {/* Logo e Nome do Sistema */}
           <div className="flex items-center gap-3">
@@ -539,6 +544,16 @@ export default function App() {
           <div className="flex items-center gap-3">
             <button
               type="button"
+              onClick={handleImprimirRelatorio}
+              title="Imprimir relatório das tarefas listadas"
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900 whitespace-nowrap shrink-0 shadow-2xs"
+            >
+              <Printer className="h-4 w-4 text-slate-500" />
+              <span>Imprimir Relatório</span>
+            </button>
+
+            <button
+              type="button"
               onClick={abrirNovaDemanda}
               className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 text-xs font-semibold text-white shadow-sm shadow-blue-500/25 transition-all whitespace-nowrap shrink-0"
             >
@@ -568,8 +583,33 @@ export default function App() {
       <main className="relative z-10 mx-auto max-w-[1320px] space-y-6 px-4 py-7 sm:px-6 lg:px-8">
         {aba === 'demandas' ? (
           <>
+            {/* Cabeçalho exclusivo para o Relatório de Tarefas na Impressão */}
+            <div className="hidden print:block border-b border-slate-300 pb-4 mb-4">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-xs">
+                      <Layers className="h-4 w-4" />
+                    </div>
+                    <h1 className="text-xl font-bold text-slate-900">
+                      Radar de Demandas · Relatório de Tarefas
+                    </h1>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-600">
+                    Filtro: <strong className="text-slate-800">{filtroStatus === 'todos' ? 'Todas as Tarefas' : filtroStatus === 'andamento' ? 'Tarefas em Andamento' : 'Tarefas Concluídas'}</strong>
+                    {buscaAplicada ? ` · Termo pesquisado: "${buscaAplicada}"` : ''}
+                  </p>
+                </div>
+                <div className="text-right text-xs text-slate-600 space-y-0.5">
+                  <div>Data de emissão: <strong>{new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</strong></div>
+                  <div>Emitido por: <strong>{usuario.displayName || usuario.email}</strong></div>
+                  <div className="font-semibold text-slate-800">Total no relatório: {demandas.length} {demandas.length === 1 ? 'tarefa' : 'tarefas'}</div>
+                </div>
+              </div>
+            </div>
+
             {/* Seção 1: Cabeçalho & Cards de Resumo / Filtros de Status */}
-            <section className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <section className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between print:hidden">
               <div>
                 <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900 text-balance">
                   Controle de Demandas Empresariais
@@ -640,7 +680,7 @@ export default function App() {
             {/* Seção 2: Inserir Demanda e Vencimento Rápido */}
             <section
               aria-label="Inserir demanda e vencimento rápido"
-              className="rounded-2xl border border-slate-100 bg-white p-5 shadow-xs"
+              className="rounded-2xl border border-slate-100 bg-white p-5 shadow-xs print:hidden"
             >
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -747,7 +787,7 @@ export default function App() {
             </section>
 
             {/* Seção 3: Barra de Filtros por Situação & Campo de Busca */}
-            <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
               <div className="flex flex-wrap items-center gap-3">
                 <div
                   className="inline-flex items-center rounded-xl border border-slate-200/80 bg-white p-1 shadow-2xs"
@@ -818,6 +858,16 @@ export default function App() {
                     </button>
                   )}
                 </div>
+
+                <button
+                  type="button"
+                  onClick={handleImprimirRelatorio}
+                  title="Imprimir relatório das tarefas listadas"
+                  className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-3.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-2xs transition-all whitespace-nowrap shrink-0"
+                >
+                  <Printer className="h-4 w-4 text-slate-500" />
+                  <span className="hidden sm:inline">Imprimir Relatório</span>
+                </button>
               </div>
             </section>
 

@@ -103,3 +103,28 @@
 .dot-blink-soft {
   animation: blinkSoftIndicator 2s ease-out infinite;
 }
+
+/* Otimizações para Impressão / Relatório de Tarefas */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 12px !important;
+  }
+
+  /* Evita quebra de página no meio de uma linha da tabela */
+  [role="row"] {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Remove sombras pesadas e fundos cinzas ao imprimir */
+  .shadow-xs, .shadow-2xs, .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl {
+    box-shadow: none !important;
+  }
+
+  /* Bordas limpas para impressão */
+  .border-slate-100 {
+    border-color: #e2e8f0 !important;
+  }
+}

@@ -83,35 +83,35 @@ export function DemandasTable({
     <div
       role="table"
       aria-label="Lista de demandas empresariais"
-      className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-xs"
+      className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-xs print:border-slate-300 print:shadow-none"
     >
-      <div role="rowgroup" className="hidden lg:block">
+      <div role="rowgroup" className="hidden lg:block print:block">
         <div
           role="row"
-          className="grid grid-cols-12 items-center gap-4 border-b border-slate-100 bg-slate-50/70 px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+          className="grid grid-cols-12 items-center gap-4 border-b border-slate-100 bg-slate-50/70 px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 print:border-slate-300 print:bg-slate-100 print:text-slate-700"
         >
-          <div role="columnheader" className="col-span-3">
+          <div role="columnheader" className="col-span-3 print:col-span-4">
             Empresa · Razão Social e CNPJ
           </div>
-          <div role="columnheader" className="col-span-3">
+          <div role="columnheader" className="col-span-3 print:col-span-4">
             Demanda
           </div>
-          <div role="columnheader" className="col-span-2">
+          <div role="columnheader" className="col-span-2 print:col-span-2">
             Vencimento
           </div>
-          <div role="columnheader" className="col-span-1">
+          <div role="columnheader" className="col-span-1 print:col-span-1">
             Prazo
           </div>
-          <div role="columnheader" className="col-span-1">
+          <div role="columnheader" className="col-span-1 print:col-span-1">
             Situação
           </div>
-          <div role="columnheader" className="col-span-2 text-right">
+          <div role="columnheader" className="col-span-2 text-right print:hidden">
             Ações
           </div>
         </div>
       </div>
 
-      <div role="rowgroup" className="divide-y divide-slate-100 p-1">
+      <div role="rowgroup" className="divide-y divide-slate-100 p-1 print:divide-slate-200">
         {demandas.map((demanda) => {
           const isConcluido = demanda.status === 'concluido';
           const isVermelhoForte = demanda.alerta === 'vermelho_forte';
@@ -120,28 +120,28 @@ export function DemandasTable({
           const editandoData = editandoVencimentoId === demanda.id;
 
           const rowAnimationClass = isConcluido
-            ? 'bg-slate-50/40 hover:bg-slate-50/80 opacity-90'
+            ? 'bg-slate-50/40 hover:bg-slate-50/80 opacity-90 print:bg-transparent print:opacity-100'
             : isVermelhoForte
-              ? 'row-blink-strong rounded-xl'
+              ? 'row-blink-strong rounded-xl print:bg-transparent print:border-l-2 print:border-red-600'
               : isVermelhoFraco
-                ? 'row-blink-soft rounded-xl'
-                : 'hover:bg-slate-50/60';
+                ? 'row-blink-soft rounded-xl print:bg-transparent print:border-l-2 print:border-amber-500'
+                : 'hover:bg-slate-50/60 print:bg-transparent';
 
           return (
             <div
               key={demanda.id}
               role="row"
-              className={`grid grid-cols-1 items-center gap-3 rounded-xl px-5 py-3.5 text-sm transition-colors lg:grid-cols-12 lg:gap-4 ${rowAnimationClass}`}
+              className={`grid grid-cols-1 items-center gap-3 rounded-xl px-5 py-3.5 text-sm transition-colors lg:grid-cols-12 print:grid-cols-12 lg:gap-4 print:py-2.5 ${rowAnimationClass}`}
             >
               {/* Razão Social e CNPJ */}
-              <div role="cell" className="flex items-center gap-3 lg:col-span-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 font-semibold text-xs">
+              <div role="cell" className="flex items-center gap-3 lg:col-span-3 print:col-span-4">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 font-semibold text-xs print:hidden">
                   {demanda.razaoSocial ? demanda.razaoSocial.charAt(0).toUpperCase() : <Building2 className="h-4 w-4" />}
                 </div>
                 <div className="min-w-0">
                   <div
                     className={`truncate font-medium ${
-                      isConcluido ? 'text-slate-500 line-through' : 'text-slate-900'
+                      isConcluido ? 'text-slate-500 line-through print:no-underline' : 'text-slate-900'
                     }`}
                   >
                     {demanda.razaoSocial}
@@ -157,7 +157,7 @@ export function DemandasTable({
               </div>
 
               {/* Demanda, Responsável e Observações */}
-              <div role="cell" className="min-w-0 lg:col-span-3">
+              <div role="cell" className="min-w-0 lg:col-span-3 print:col-span-4">
                 <div
                   className={`truncate font-medium ${
                     isConcluido ? 'text-slate-500' : 'text-slate-900'
@@ -174,14 +174,14 @@ export function DemandasTable({
                   {demanda.descricao && (
                     <>
                       <span aria-hidden="true" className="text-slate-300">·</span>
-                      <span className="truncate max-w-[140px]">{demanda.descricao}</span>
+                      <span className="truncate max-w-[140px] print:max-w-none">{demanda.descricao}</span>
                     </>
                   )}
                 </div>
               </div>
 
               {/* Vencimento com Edição Rápida */}
-              <div role="cell" className="whitespace-nowrap lg:col-span-2">
+              <div role="cell" className="whitespace-nowrap lg:col-span-2 print:col-span-2">
                 {editandoData ? (
                   <input
                     type="date"
@@ -204,24 +204,24 @@ export function DemandasTable({
                     type="button"
                     onClick={() => setEditandoVencimentoId(demanda.id)}
                     title="Clique para inserir ou alterar vencimento"
-                    className="group inline-flex items-center gap-1.5 rounded-lg border border-slate-200/80 bg-white px-2.5 py-1.5 font-mono text-xs tabular-nums transition-colors hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600 shadow-2xs"
+                    className="group inline-flex items-center gap-1.5 rounded-lg border border-slate-200/80 bg-white px-2.5 py-1.5 font-mono text-xs tabular-nums transition-colors hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600 shadow-2xs print:border-none print:shadow-none print:p-0"
                   >
-                    <Calendar className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-500" />
+                    <Calendar className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-500 print:hidden" />
                     <span>{formatarDataPtBr(demanda.prazo)}</span>
                   </button>
                 )}
               </div>
 
               {/* Prazo / Alertas */}
-              <div role="cell" className="whitespace-nowrap lg:col-span-1">
+              <div role="cell" className="whitespace-nowrap lg:col-span-1 print:col-span-1">
                 {isVermelhoForte && (
                   <div className="flex items-center gap-1.5 text-rose-700">
                     <span
-                      className="dot-blink-strong inline-block h-2 w-2 shrink-0 rounded-full"
+                      className="dot-blink-strong inline-block h-2 w-2 shrink-0 rounded-full print:hidden"
                       aria-hidden="true"
                     />
                     <div className="flex items-center gap-1 text-xs font-semibold">
-                      <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-rose-600" />
+                      <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-rose-600 print:hidden" />
                       <span>{demanda.alertaLabel}</span>
                     </div>
                   </div>
@@ -230,7 +230,7 @@ export function DemandasTable({
                 {isVermelhoFraco && (
                   <div className="flex items-center gap-1.5 text-amber-700">
                     <span
-                      className="dot-blink-soft inline-block h-2 w-2 shrink-0 rounded-full"
+                      className="dot-blink-soft inline-block h-2 w-2 shrink-0 rounded-full print:hidden"
                       aria-hidden="true"
                     />
                     <span className="text-xs font-semibold">{demanda.alertaLabel}</span>
@@ -249,22 +249,22 @@ export function DemandasTable({
               </div>
 
               {/* Situação */}
-              <div role="cell" className="whitespace-nowrap lg:col-span-1">
+              <div role="cell" className="whitespace-nowrap lg:col-span-1 print:col-span-1">
                 {isConcluido ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-600">
-                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 print:bg-transparent print:p-0">
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0 print:hidden" />
                     Concluída
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-600">
-                    <Clock className="h-3 w-3 shrink-0" />
+                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-600 print:bg-transparent print:p-0">
+                    <Clock className="h-3 w-3 shrink-0 print:hidden" />
                     Andamento
                   </span>
                 )}
               </div>
 
-              {/* Ações */}
-              <div role="cell" className="flex items-center justify-end gap-1.5 whitespace-nowrap lg:col-span-2">
+              {/* Ações (ocultadas na impressão) */}
+              <div role="cell" className="flex items-center justify-end gap-1.5 whitespace-nowrap lg:col-span-2 print:hidden">
                 <button
                   type="button"
                   disabled={ocupada}
