@@ -1,0 +1,289 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 0: Default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // Global Hardened Primitives
+    // =========================================================================
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isVerifiedUser() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && (
+        request.auth.token.email == 'consilcontabilidade.expedicao@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isTeamMember() {
+      return isVerifiedUser() && (
+        isAdmin() ||
+        exists(/databases/$(database)/documents/users/$(request.auth.uid))
+      );
+    }
+
+    // =========================================================================
+    // Validation Blueprints
+    // =========================================================================
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'role', 'criadoEm', 'atualizadoEm']) &&
+        data.keys().hasOnly(['uid', 'email', 'displayName', 'role', 'criadoEm', 'atualizadoEm']) &&
+        isValidId(data.uid) &&
+        data.uid == userId &&
+        data.email is string &&
+        data.email.size() >= 3 &&
+        data.email.size() <= 254 &&
+        data.displayName is string &&
+        data.displayName.size() >= 1 &&
+        data.displayName.size() <= 120 &&
+        data.role is string &&
+        data.role in ['member', 'admin'] &&
+        data.criadoEm is timestamp &&
+        data.atualizadoEm is timestamp;
+    }
+
+    function isValidAdminRecord(data, userId) {
+      return data.keys().hasAll(['uid', 'email', 'criadoEm']) &&
+        data.keys().hasOnly(['uid', 'email', 'criadoEm']) &&
+        isValidId(data.uid) &&
+        data.uid == userId &&
+        data.email is string &&
+        data.email.size() >= 3 &&
+        data.email.size() <= 254 &&
+        data.criadoEm is timestamp;
+    }
+
+    function isValidDemanda(data) {
+      return data.keys().hasAll([
+          'workspaceId',
+          'razaoSocial',
+          'cnpj',
+          'titulo',
+          'descricao',
+          'responsavel',
+          'prazo',
+          'status',
+          'ownerId',
+          'criadoPorNome',
+          'atualizadoPorUid',
+          'atualizadoPorNome',
+          'criadoEm',
+          'atualizadoEm',
+          'concluidoEm'
+        ]) &&
+        data.keys().hasOnly([
+          'workspaceId',
+          'razaoSocial',
+          'cnpj',
+          'titulo',
+          'descricao',
+          'responsavel',
+          'prazo',
+          'status',
+          'ownerId',
+          'criadoPorNome',
+          'atualizadoPorUid',
+          'atualizadoPorNome',
+          'criadoEm',
+          'atualizadoEm',
+          'concluidoEm'
+        ]) &&
+        data.workspaceId is string &&
+        data.workspaceId == 'principal' &&
+        data.razaoSocial is string &&
+        data.razaoSocial.size() >= 2 &&
+        data.razaoSocial.size() <= 180 &&
+        data.cnpj is string &&
+        data.cnpj.size() == 18 &&
+        data.cnpj.matches('^\\d{2}\\.\\d{3}\\.\\d{3}/\\d{4}-\\d{2}$') &&
+        data.titulo is string &&
+        data.titulo.size() >= 3 &&
+        data.titulo.size() <= 220 &&
+        data.descricao is string &&
+        data.descricao.size() <= 1000 &&
+        data.responsavel is string &&
+        data.responsavel.size() >= 1 &&
+        data.responsavel.size() <= 120 &&
+        data.prazo is string &&
+        data.prazo.size() == 10 &&
+        data.prazo.matches('^\\d{4}-\\d{2}-\\d{2}$') &&
+        data.status is string &&
+        data.status in ['andamento', 'concluido'] &&
+        isValidId(data.ownerId) &&
+        data.criadoPorNome is string &&
+        data.criadoPorNome.size() >= 1 &&
+        data.criadoPorNome.size() <= 120 &&
+        isValidId(data.atualizadoPorUid) &&
+        data.atualizadoPorNome is string &&
+        data.atualizadoPorNome.size() >= 1 &&
+        data.atualizadoPorNome.size() <= 120 &&
+        data.criadoEm is timestamp &&
+        data.atualizadoEm is timestamp &&
+        (
+          (data.status == 'andamento' && data.concluidoEm == null) ||
+          (data.status == 'concluido' && data.concluidoEm is timestamp)
+        );
+    }
+
+    // =========================================================================
+    // Collection: /users/{userId} (PII Isolated)
+    // =========================================================================
+    match /users/{userId} {
+      allow get: if isVerifiedUser() && isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+
+      allow create: if isVerifiedUser() &&
+        isValidId(userId) &&
+        isValidUserProfile(incoming(), userId) &&
+        isOwner(userId) &&
+        incoming().email == request.auth.token.email &&
+        incoming().criadoEm == request.time &&
+        incoming().atualizadoEm == request.time &&
+        (incoming().role == 'member' || isAdmin());
+
+      allow update: if isVerifiedUser() &&
+        isValidId(userId) &&
+        isValidUserProfile(incoming(), userId) &&
+        incoming().uid == existing().uid &&
+        incoming().criadoEm == existing().criadoEm &&
+        incoming().atualizadoEm == request.time && (
+          isAdmin() ||
+          (
+            isOwner(userId) &&
+            incoming().role == existing().role &&
+            incoming().email == request.auth.token.email &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email', 'atualizadoEm'])
+          )
+        );
+
+      allow delete: if isVerifiedUser() && isValidId(userId) && isAdmin();
+    }
+
+    // =========================================================================
+    // Collection: /admins/{userId}
+    // =========================================================================
+    match /admins/{userId} {
+      allow get: if isVerifiedUser() && isValidId(userId) && isAdmin();
+      allow list: if isAdmin();
+      allow create: if isVerifiedUser() &&
+        isValidId(userId) &&
+        isValidAdminRecord(incoming(), userId) &&
+        incoming().criadoEm == request.time &&
+        isAdmin();
+      allow update: if isVerifiedUser() &&
+        isValidId(userId) &&
+        isValidAdminRecord(incoming(), userId) &&
+        incoming().uid == existing().uid &&
+        incoming().criadoEm == existing().criadoEm &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['email']) &&
+        isAdmin();
+      allow delete: if isVerifiedUser() && isValidId(userId) && isAdmin();
+    }
+
+    // =========================================================================
+    // Collection: /demandas/{demandaId} (Shared Real-Time Workspace)
+    // =========================================================================
+    function isConcluidoTransitionValid() {
+      return (
+        (existing().status == 'andamento' && incoming().status == 'concluido' && incoming().concluidoEm == request.time) ||
+        (existing().status == 'concluido' && incoming().status == 'andamento' && incoming().concluidoEm == null) ||
+        (existing().status == incoming().status && incoming().concluidoEm == existing().concluidoEm)
+      );
+    }
+
+    match /demandas/{demandaId} {
+      allow get: if isVerifiedUser() &&
+        isValidId(demandaId) &&
+        existing().workspaceId == 'principal';
+
+      // Pillar 8: Never use get()/exists() in allow list; enforce resource.data boundary directly
+      allow list: if isVerifiedUser() &&
+        resource.data.workspaceId == 'principal';
+
+      allow create: if isVerifiedUser() &&
+        isValidId(demandaId) &&
+        isValidDemanda(incoming()) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().atualizadoPorUid == request.auth.uid &&
+        incoming().criadoEm == request.time &&
+        incoming().atualizadoEm == request.time &&
+        (incoming().status == 'andamento' || incoming().concluidoEm == request.time) &&
+        isTeamMember();
+
+      allow update: if isVerifiedUser() &&
+        isValidId(demandaId) &&
+        isValidDemanda(incoming()) &&
+        existing().workspaceId == 'principal' &&
+        incoming().workspaceId == existing().workspaceId &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().criadoEm == existing().criadoEm &&
+        incoming().criadoPorNome == existing().criadoPorNome &&
+        incoming().atualizadoPorUid == request.auth.uid &&
+        incoming().atualizadoEm == request.time &&
+        isConcluidoTransitionValid() &&
+        isTeamMember() && (
+          isAdmin() ||
+          // Action 1: Atualizar vencimento inline
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'prazo',
+            'atualizadoPorUid',
+            'atualizadoPorNome',
+            'atualizadoEm'
+          ]) ||
+          // Action 2: Concluir ou reabrir demanda
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'status',
+            'concluidoEm',
+            'atualizadoPorUid',
+            'atualizadoPorNome',
+            'atualizadoEm'
+          ]) ||
+          // Action 3: Editar campos completos via modal
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'razaoSocial',
+            'cnpj',
+            'titulo',
+            'descricao',
+            'responsavel',
+            'prazo',
+            'status',
+            'concluidoEm',
+            'atualizadoPorUid',
+            'atualizadoPorNome',
+            'atualizadoEm'
+          ])
+        );
+
+      allow delete: if isVerifiedUser() &&
+        isValidId(demandaId) &&
+        existing().workspaceId == 'principal' &&
+        isTeamMember();
+    }
+  }
+}

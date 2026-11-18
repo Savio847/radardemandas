@@ -1,0 +1,6 @@
+{
+  "name": "Gestão de Demandas Empresariais",
+  "description": "API REST e painel operacional para controle de demandas por empresa (Razão Social e CNPJ) com filtros por andamento ou conclusão e alertas visuais de vencimento.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

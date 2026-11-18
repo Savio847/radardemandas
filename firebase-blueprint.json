@@ -1,0 +1,207 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Perfil privado do usuário autenticado para controle de acesso e auditoria.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Identificador único do usuário no Firebase Auth.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "E-mail verificado da conta Google do usuário.",
+          "minLength": 3,
+          "maxLength": 254
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Nome de exibição do usuário.",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "role": {
+          "type": "string",
+          "description": "Papel do usuário no sistema.",
+          "enum": ["member", "admin"]
+        },
+        "criadoEm": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data/hora de criação registrada via serverTimestamp."
+        },
+        "atualizadoEm": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data/hora da última atualização registrada via serverTimestamp."
+        }
+      },
+      "required": ["uid", "email", "displayName", "role", "criadoEm", "atualizadoEm"]
+    },
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Registro de administrador autorizado.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 254
+        },
+        "criadoEm": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "email", "criadoEm"]
+    },
+    "Demanda": {
+      "title": "Demanda",
+      "description": "Demanda empresarial compartilhada em tempo real entre todos os usuários autenticados.",
+      "type": "object",
+      "properties": {
+        "workspaceId": {
+          "type": "string",
+          "description": "Identificador do espaço de trabalho compartilhado.",
+          "enum": ["principal"],
+          "minLength": 1,
+          "maxLength": 32,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "razaoSocial": {
+          "type": "string",
+          "description": "Razão Social da empresa.",
+          "minLength": 2,
+          "maxLength": 180
+        },
+        "cnpj": {
+          "type": "string",
+          "description": "CNPJ formatado da empresa (00.000.000/0001-00).",
+          "minLength": 18,
+          "maxLength": 18,
+          "pattern": "^\\d{2}\\.\\d{3}\\.\\d{3}/\\d{4}-\\d{2}$"
+        },
+        "titulo": {
+          "type": "string",
+          "description": "Título resumido da demanda.",
+          "minLength": 3,
+          "maxLength": 220
+        },
+        "descricao": {
+          "type": "string",
+          "description": "Observações adicionais sobre a demanda.",
+          "minLength": 0,
+          "maxLength": 1000
+        },
+        "responsavel": {
+          "type": "string",
+          "description": "Responsável pela execução da demanda.",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "prazo": {
+          "type": "string",
+          "description": "Data de vencimento no formato YYYY-MM-DD.",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "status": {
+          "type": "string",
+          "description": "Situação atual da demanda.",
+          "enum": ["andamento", "concluido"]
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "UID do criador original da demanda (imutável).",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "criadoPorNome": {
+          "type": "string",
+          "description": "Nome de exibição de quem criou a demanda.",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "atualizadoPorUid": {
+          "type": "string",
+          "description": "UID do último usuário que editou a demanda.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "atualizadoPorNome": {
+          "type": "string",
+          "description": "Nome do último usuário que editou a demanda.",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "criadoEm": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Carimbo de tempo do servidor na criação (imutável)."
+        },
+        "atualizadoEm": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Carimbo de tempo do servidor na última atualização."
+        },
+        "concluidoEm": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Carimbo de tempo do servidor quando concluída, ou null quando em andamento."
+        }
+      },
+      "required": [
+        "workspaceId",
+        "razaoSocial",
+        "cnpj",
+        "titulo",
+        "descricao",
+        "responsavel",
+        "prazo",
+        "status",
+        "ownerId",
+        "criadoPorNome",
+        "atualizadoPorUid",
+        "atualizadoPorNome",
+        "criadoEm",
+        "atualizadoEm",
+        "concluidoEm"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Perfis privados de usuários autenticados com isolamento de PII."
+    },
+    "/admins/{userId}": {
+      "schema": {
+        "$ref": "#/entities/AdminRecord"
+      },
+      "description": "Lista de administradores autorizados."
+    },
+    "/demandas/{demandaId}": {
+      "schema": {
+        "$ref": "#/entities/Demanda"
+      },
+      "description": "Demandas empresariais sincronizadas em tempo real para o espaço compartilhado."
+    }
+  }
+}
