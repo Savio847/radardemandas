@@ -1,5 +1,5 @@
 import React from 'react';
-import { LogIn, ShieldCheck, Layers } from 'lucide-react';
+import { LogIn, ShieldCheck, Layers, Loader2 } from 'lucide-react';
 
 interface AuthGateProps {
   carregandoAuth: boolean;
@@ -54,12 +54,17 @@ export function AuthGate({
             onClick={aoEntrar}
             className="mt-6 inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm shadow-blue-500/25 transition-all hover:shadow-md hover:shadow-blue-500/30 disabled:opacity-60"
           >
-            <LogIn className="h-4 w-4" />
-            {carregandoAuth
-              ? 'Verificando sessão...'
-              : entrando
-                ? 'Conectando...'
-                : 'Entrar com Google'}
+            {entrando || carregandoAuth ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {carregandoAuth ? 'Verificando sessão...' : 'Conectando...'}
+              </>
+            ) : (
+              <>
+                <LogIn className="h-4 w-4" />
+                Entrar com Google
+              </>
+            )}
           </button>
         </div>
       </main>
