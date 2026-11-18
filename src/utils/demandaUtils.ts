@@ -90,6 +90,7 @@ export function classificarAlerta(
     };
   }
 
+  // Vencida: passou da data → vermelho
   if (diasRestantes < 0) {
     const atraso = Math.abs(diasRestantes);
     return {
@@ -98,30 +99,18 @@ export function classificarAlerta(
     };
   }
 
+  // Vence hoje → amarelo (ainda não venceu)
   if (diasRestantes === 0) {
     return {
-      alerta: 'vermelho_forte',
+      alerta: 'vermelho_fraco',
       alertaLabel: 'Vence hoje',
     };
   }
 
-  if (diasRestantes <= 2) {
-    return {
-      alerta: 'vermelho_forte',
-      alertaLabel: diasRestantes === 1 ? 'Vence amanhã' : `Vence em ${diasRestantes} dias`,
-    };
-  }
-
-  if (diasRestantes <= 7) {
-    return {
-      alerta: 'vermelho_fraco',
-      alertaLabel: `Vence em ${diasRestantes} dias`,
-    };
-  }
-
+  // Ainda dentro do prazo → amarelo
   return {
-    alerta: 'nenhum',
-    alertaLabel: `Em dia · ${diasRestantes} dias`,
+    alerta: 'vermelho_fraco',
+    alertaLabel: diasRestantes === 1 ? 'Vence amanhã' : `Vence em ${diasRestantes} dias`,
   };
 }
 
