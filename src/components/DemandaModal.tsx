@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { X, RefreshCw, AlertCircle, CheckCircle2, Tag, Calendar, Building, Sparkles } from 'lucide-react';
 import type { DemandaComAlerta, DemandaPayload, DemandaStatus } from '../types/demanda.ts';
 import {
   adicionarDiasIso,
@@ -10,6 +10,15 @@ import {
 } from '../utils/demandaUtils.ts';
 
 const RASCUNHO_KEY = 'radar_demandas_modal_rascunho';
+
+const CATEGORIAS_SUGESTO = [
+  '#Fiscal',
+  '#Tributário',
+  '#Trabalhista',
+  '#Societário',
+  '#Contábil',
+  '#Auditoria',
+];
 
 interface DemandaModalProps {
   aberto: boolean;
@@ -101,7 +110,6 @@ export function DemandaModal({
     }
   }, [aberto, demandaEdicao]);
 
-  // Auto-save do rascunho no cadastro novo
   useEffect(() => {
     if (!aberto || demandaEdicao || !inicializadoRef.current) return;
     try {
@@ -114,7 +122,6 @@ export function DemandaModal({
     }
   }, [aberto, demandaEdicao, razaoSocial, cnpj, titulo, descricao, responsavel, prazo, status]);
 
-  // Auto-save em tempo real durante a edição de uma demanda existente
   useEffect(() => {
     if (!aberto || !demandaEdicao || !inicializadoRef.current) return;
 
@@ -211,48 +218,79 @@ export function DemandaModal({
     await aoSalvar(payload, demandaEdicao?.id);
   };
 
+  const aplicarTagNoTitulo = (tag: string) => {
+    if (!descricao.includes(tag)) {
+      setDescricao((prev) => (prev ? `${prev} ${tag}` : tag));
+    }
+  };
+
   const mensagemErro = erroLocal || erroExterno;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#24060e]/60 p-4 backdrop-blur-[2px]"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs transition-opacity"
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-demanda-titulo"
     >
-      <div className="w-full max-w-xl rounded-xl border border-[#e8d5da] bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-[#e8d5da] bg-[#faf2f4] px-6 py-4 rounded-t-xl">
-          <div>
-            <h2 id="modal-demanda-titulo" className="text-lg font-semibold text-[#2b0b13]">
-              {demandaEdicao ? 'Editar Demanda' : 'Nova Demanda Empresarial'}
-            </h2>
-            <p className="mt-0.5 text-xs text-[#6e4c55]">
-              {demandaEdicao
-                ? 'Qualquer alteração válida é salva automaticamente.'
-                : 'O rascunho e o cadastro são salvos automaticamente.'}
-            </p>
+      <div className="w-full max-w-xl overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 id="modal-demanda-titulo" className="text-base font-bold text-slate-900">
+                {demandaEdicao ? 'Editar Demanda' : 'Nova Demanda Empresarial'}
+              </h2>
+              <p className="text-xs text-slate-400">
+                {demandaEdicao
+                  ? 'Alterações salvas automaticamente na nuvem.'
+                  : 'Preencha os dados da obrigação para o radar.'}
+              </p>
+            </div>
           </div>
           <button
             type="button"
             onClick={aoFechar}
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-[#6e4c55] transition-colors hover:bg-[#f0dfe3] hover:text-[#2b0b13]"
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
             aria-label="Fechar janela"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 px-6 py-5">
           {mensagemErro && (
-            <div className="flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-800">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+            <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-medium text-rose-800">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
               <span>{mensagemErro}</span>
             </div>
           )}
 
+          {/* Tags de Categoria */}
+          <div>
+            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mb-2">
+              <Tag className="h-3.5 w-3.5 text-blue-600" />
+              <span>Categorias Rápidas:</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {CATEGORIAS_SUGESTO.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => aplicarTagNoTitulo(tag)}
+                  className="rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-600 px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors"
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label htmlFor="razao-social" className="block text-xs font-medium text-[#4a202b]">
+              <label htmlFor="razao-social" className="block text-xs font-semibold text-slate-700">
                 Razão Social *
               </label>
               <input
@@ -262,19 +300,19 @@ export function DemandaModal({
                 value={razaoSocial}
                 onChange={(e) => setRazaoSocial(e.target.value)}
                 placeholder="Ex.: Horizonte Logística e Transportes Ltda."
-                className="mt-1.5 w-full rounded-lg border border-[#e4cfd5] bg-[#fdfafb] px-3 py-2 text-sm text-[#2b0b13] placeholder:text-[#9c7b84] focus:border-[#5e1024] focus:bg-white focus:outline-none"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all shadow-2xs"
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between">
-                <label htmlFor="cnpj" className="block text-xs font-medium text-[#4a202b]">
+                <label htmlFor="cnpj" className="block text-xs font-semibold text-slate-700">
                   CNPJ *
                 </label>
                 <button
                   type="button"
                   onClick={() => setCnpj(gerarCnpjValido())}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-[#6e162e] hover:text-[#3b0a17]"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-700 transition-colors"
                 >
                   <RefreshCw className="h-3 w-3" />
                   Gerar CNPJ válido
@@ -287,21 +325,21 @@ export function DemandaModal({
                 value={cnpj}
                 onChange={(e) => setCnpj(formatarCnpj(e.target.value))}
                 placeholder="00.000.000/0001-00"
-                className="mt-1.5 w-full rounded-lg border border-[#e4cfd5] bg-[#fdfafb] px-3 py-2 font-mono text-sm tabular-nums text-[#2b0b13] placeholder:text-[#9c7b84] focus:border-[#5e1024] focus:bg-white focus:outline-none"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-mono text-sm tabular-nums text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all shadow-2xs"
               />
               {cnpjLimpo.length === 14 && (
                 <p
-                  className={`mt-1 text-xs ${
-                    cnpjValido ? 'text-emerald-700' : 'text-red-700'
+                  className={`mt-1 text-xs font-medium ${
+                    cnpjValido ? 'text-emerald-600' : 'text-rose-600'
                   }`}
                 >
-                  {cnpjValido ? 'CNPJ válido' : 'Dígitos verificadores inválidos'}
+                  {cnpjValido ? '✓ CNPJ válido' : '✕ Dígitos verificadores inválidos'}
                 </p>
               )}
             </div>
 
             <div>
-              <label htmlFor="responsavel" className="block text-xs font-medium text-[#4a202b]">
+              <label htmlFor="responsavel" className="block text-xs font-semibold text-slate-700">
                 Responsável
               </label>
               <input
@@ -310,13 +348,13 @@ export function DemandaModal({
                 value={responsavel}
                 onChange={(e) => setResponsavel(e.target.value)}
                 placeholder="Ex.: Mariana Alencar"
-                className="mt-1.5 w-full rounded-lg border border-[#e4cfd5] bg-[#fdfafb] px-3 py-2 text-sm text-[#2b0b13] placeholder:text-[#9c7b84] focus:border-[#5e1024] focus:bg-white focus:outline-none"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all shadow-2xs"
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="titulo-demanda" className="block text-xs font-medium text-[#4a202b]">
+            <label htmlFor="titulo-demanda" className="block text-xs font-semibold text-slate-700">
               Título da Demanda *
             </label>
             <input
@@ -326,28 +364,28 @@ export function DemandaModal({
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
               placeholder="Ex.: Entrega da DCTFWeb e conferência de INSS"
-              className="mt-1.5 w-full rounded-lg border border-[#e4cfd5] bg-[#fdfafb] px-3 py-2 text-sm text-[#2b0b13] placeholder:text-[#9c7b84] focus:border-[#5e1024] focus:bg-white focus:outline-none"
+              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all shadow-2xs"
             />
           </div>
 
           <div>
-            <label htmlFor="descricao-demanda" className="block text-xs font-medium text-[#4a202b]">
-              Observações
+            <label htmlFor="descricao-demanda" className="block text-xs font-semibold text-slate-700">
+              Observações & Tags
             </label>
             <textarea
               id="descricao-demanda"
               rows={2}
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
-              placeholder="Detalhes operacionais ou número de protocolo..."
-              className="mt-1.5 w-full rounded-lg border border-[#e4cfd5] bg-[#fdfafb] px-3 py-2 text-sm text-[#2b0b13] placeholder:text-[#9c7b84] focus:border-[#5e1024] focus:bg-white focus:outline-none"
+              placeholder="Protocolo, links internos ou detalhes da obrigação..."
+              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all shadow-2xs"
             />
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="prazo-demanda" className="block text-xs font-medium text-[#4a202b]">
-                Inserir Vencimento *
+              <label htmlFor="prazo-demanda" className="block text-xs font-semibold text-slate-700">
+                Data de Vencimento *
               </label>
               <input
                 id="prazo-demanda"
@@ -355,57 +393,37 @@ export function DemandaModal({
                 required
                 value={prazo}
                 onChange={(e) => setPrazo(e.target.value)}
-                className="mt-1.5 w-full rounded-lg border border-[#e4cfd5] bg-[#fdfafb] px-3 py-2 font-mono text-sm tabular-nums text-[#2b0b13] focus:border-[#5e1024] focus:bg-white focus:outline-none"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-mono text-sm tabular-nums text-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all shadow-2xs"
               />
               <div className="mt-2 flex flex-wrap gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setPrazo(adicionarDiasIso(-1))}
-                  className="rounded-md border border-[#e4cfd5] bg-[#faf2f4] px-2 py-1 text-[11px] font-medium text-[#4a202b] hover:bg-[#f2e2e6]"
-                >
-                  Ontem
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPrazo(adicionarDiasIso(0))}
-                  className="rounded-md border border-[#e4cfd5] bg-[#faf2f4] px-2 py-1 text-[11px] font-medium text-[#4a202b] hover:bg-[#f2e2e6]"
-                >
-                  Hoje
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPrazo(adicionarDiasIso(2))}
-                  className="rounded-md border border-[#e4cfd5] bg-[#faf2f4] px-2 py-1 text-[11px] font-medium text-[#4a202b] hover:bg-[#f2e2e6]"
-                >
-                  +2 dias
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPrazo(adicionarDiasIso(5))}
-                  className="rounded-md border border-[#e4cfd5] bg-[#faf2f4] px-2 py-1 text-[11px] font-medium text-[#4a202b] hover:bg-[#f2e2e6]"
-                >
-                  +5 dias
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPrazo(adicionarDiasIso(15))}
-                  className="rounded-md border border-[#e4cfd5] bg-[#faf2f4] px-2 py-1 text-[11px] font-medium text-[#4a202b] hover:bg-[#f2e2e6]"
-                >
-                  +15 dias
-                </button>
+                {[
+                  { label: 'Hoje', dias: 0 },
+                  { label: '+2 dias', dias: 2 },
+                  { label: '+5 dias', dias: 5 },
+                  { label: '+15 dias', dias: 15 },
+                ].map((item) => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => setPrazo(adicionarDiasIso(item.dias))}
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-medium text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                  >
+                    {item.label}
+                  </button>
+                ))}
               </div>
             </div>
 
             <div>
-              <span className="block text-xs font-medium text-[#4a202b]">Situação *</span>
-              <div className="mt-1.5 grid grid-cols-2 gap-1 rounded-lg border border-[#e8d5da] bg-[#f3e7ea] p-1">
+              <span className="block text-xs font-semibold text-slate-700">Situação *</span>
+              <div className="mt-1.5 grid grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">
                 <button
                   type="button"
                   onClick={() => setStatus('andamento')}
-                  className={`rounded-md px-3 py-2 text-xs font-medium transition-colors whitespace-nowrap ${
+                  className={`rounded-lg py-2 text-xs font-semibold transition-all ${
                     status === 'andamento'
-                      ? 'bg-[#5e1024] text-white shadow-xs'
-                      : 'text-[#5b353f] hover:text-[#2b0b13]'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   Em Andamento
@@ -413,51 +431,51 @@ export function DemandaModal({
                 <button
                   type="button"
                   onClick={() => setStatus('concluido')}
-                  className={`rounded-md px-3 py-2 text-xs font-medium transition-colors whitespace-nowrap ${
+                  className={`rounded-lg py-2 text-xs font-semibold transition-all ${
                     status === 'concluido'
-                      ? 'bg-emerald-700 text-white shadow-xs'
-                      : 'text-[#5b353f] hover:text-[#2b0b13]'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   Concluída
                 </button>
               </div>
-              <p className="mt-2 text-xs text-[#6e4c55]">
-                Demandas concluídas ficam em verde; em andamento próximas do prazo tremem e piscam.
+              <p className="mt-2 text-[11px] text-slate-400">
+                Prazos vencidos ou críticos recebem alerta sonoro e visual automático no radar.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-3 border-t border-[#e8d5da] pt-4">
+          <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
             <div className="text-xs">
               {demandaEdicao && estadoAutoSave === 'salvando' && (
-                <span className="text-[#6e4c55]">Salvando automaticamente...</span>
+                <span className="text-slate-400">Salvando alterações...</span>
               )}
               {demandaEdicao && estadoAutoSave === 'salvo' && (
-                <span className="inline-flex items-center gap-1.5 font-medium text-emerald-700">
+                <span className="inline-flex items-center gap-1.5 font-medium text-emerald-600">
                   <CheckCircle2 className="h-3.5 w-3.5" />
                   Salvo automaticamente
                 </span>
               )}
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <button
                 type="button"
                 onClick={aoFechar}
-                className="rounded-lg border border-[#e4cfd5] bg-white px-4 py-2 text-sm font-medium text-[#4a202b] transition-colors hover:bg-[#faf2f4] whitespace-nowrap shrink-0"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
               >
                 {demandaEdicao ? 'Fechar' : 'Cancelar'}
               </button>
               <button
                 type="submit"
                 disabled={salvando}
-                className="rounded-lg bg-[#5e1024] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#490b1b] disabled:opacity-50 whitespace-nowrap shrink-0"
+                className="rounded-xl bg-blue-600 hover:bg-blue-700 px-5 py-2 text-xs font-semibold text-white shadow-sm shadow-blue-500/25 transition-all disabled:opacity-50"
               >
                 {salvando
                   ? 'Salvando...'
                   : demandaEdicao
-                    ? 'Salvar e Fechar'
+                    ? 'Salvar Alterações'
                     : 'Cadastrar Demanda'}
               </button>
             </div>
