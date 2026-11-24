@@ -82,7 +82,13 @@ export function DemandaModal({
           setDescricao(parsed.descricao || '');
           setResponsavel(parsed.responsavel || '');
           setPrazo(parsed.prazo || adicionarDiasIso(2));
-          setStatus(parsed.status === 'concluido' ? 'concluido' : 'andamento');
+          setStatus(
+            parsed.status === 'concluido'
+              ? 'concluido'
+              : parsed.status === 'pendente'
+                ? 'pendente'
+                : 'andamento'
+          );
           carregado = true;
         }
       } catch {
@@ -398,11 +404,11 @@ export function DemandaModal({
 
             <div>
               <span className="block text-xs font-semibold text-slate-700">Situação *</span>
-              <div className="mt-1.5 grid grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">
+              <div className="mt-1.5 grid grid-cols-3 gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">
                 <button
                   type="button"
                   onClick={() => setStatus('andamento')}
-                  className={`rounded-lg px-3 py-2 text-xs font-semibold transition-all whitespace-nowrap ${
+                  className={`rounded-lg px-2.5 py-2 text-xs font-semibold transition-all whitespace-nowrap text-center ${
                     status === 'andamento'
                       ? 'bg-blue-600 text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
@@ -412,8 +418,19 @@ export function DemandaModal({
                 </button>
                 <button
                   type="button"
+                  onClick={() => setStatus('pendente')}
+                  className={`rounded-lg px-2.5 py-2 text-xs font-semibold transition-all whitespace-nowrap text-center ${
+                    status === 'pendente'
+                      ? 'bg-amber-500 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Pendente
+                </button>
+                <button
+                  type="button"
                   onClick={() => setStatus('concluido')}
-                  className={`rounded-lg px-3 py-2 text-xs font-semibold transition-all whitespace-nowrap ${
+                  className={`rounded-lg px-2.5 py-2 text-xs font-semibold transition-all whitespace-nowrap text-center ${
                     status === 'concluido'
                       ? 'bg-emerald-600 text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
@@ -423,7 +440,7 @@ export function DemandaModal({
                 </button>
               </div>
               <p className="mt-2 text-[11px] text-slate-400">
-                Demandas concluídas ficam em verde; em andamento próximas do prazo tremem e piscam.
+                Demandas concluídas ficam em verde; vencidas ficam em vermelho e demandas dentro do prazo ficam em amarelo.
               </p>
             </div>
           </div>

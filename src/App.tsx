@@ -8,11 +8,14 @@ import {
 import {
   AlertTriangle,
   Calendar,
+  CalendarDays,
   CalendarPlus,
   CheckCircle2,
   Clock,
   Code2,
   FileText,
+  Filter,
+  HelpCircle,
   Layers,
   LayoutDashboard,
   LogOut,
@@ -55,8 +58,9 @@ import { DemandaModal } from './components/DemandaModal.tsx';
 import { ApiExplorerView } from './components/ApiExplorerView.tsx';
 import { AuthGate } from './components/AuthGate.tsx';
 
-type AbaAtiva = 'demandas' | 'api';
+type AbaAtiva = 'demandas' | 'vencimentos' | 'api';
 type FiltroStatus = 'todos' | DemandaStatus;
+type FiltroVencimento = 'todos' | 'vencidos' | 'hoje' | 'esta_semana' | 'este_mes' | 'personalizado';
 
 const RAPIDA_RASCUNHO_KEY = 'radar_demandas_rapida_rascunho';
 
@@ -69,6 +73,9 @@ export default function App() {
 
   const [aba, setAba] = useState<AbaAtiva>('demandas');
   const [filtroStatus, setFiltroStatus] = useState<FiltroStatus>('todos');
+  const [filtroVencimento, setFiltroVencimento] = useState<FiltroVencimento>('todos');
+  const [dataInicioFiltro, setDataInicioFiltro] = useState('');
+  const [dataFimFiltro, setDataFimFiltro] = useState('');
   const [busca, setBusca] = useState('');
   const [buscaAplicada, setBuscaAplicada] = useState('');
 
@@ -247,6 +254,7 @@ export default function App() {
     const enriquecidas = todasDemandasRaw.map((d) => enriquecerDemanda(d, agora));
 
     let andamento = 0;
+    let pendente = 0;
     let concluido = 0;
     let vermelhoForte = 0;
     let vermelhoFraco = 0;
@@ -255,6 +263,11 @@ export default function App() {
     for (const item of enriquecidas) {
       if (item.status === 'concluido') {
         concluido += 1;
+      } else if (item.status === 'pendente') {
+        pendente += 1;
+        if (item.alerta === 'vermelho_forte') vermelhoForte += 1;
+        else if (item.alerta === 'vermelho_fraco') vermelhoFraco += 1;
+        else emDia += 1;
       } else {
         andamento += 1;
         if (item.alerta === 'vermelho_forte') vermelhoForte += 1;
@@ -266,6 +279,7 @@ export default function App() {
     const metaCalculada: DemandasMeta = {
       total: enriquecidas.length,
       andamento,
+      pendente,
       concluido,
       vermelhoForte,
       vermelhoFraco,
@@ -274,6 +288,37 @@ export default function App() {
     };
 
     let filtradas = enriquecidas;
+
+    // Se estiver na aba exclusiva de Vencimentos ou se houver filtro de vencimento aplicado
+    if (aba === 'vencimentos' || filtroVencimento !== 'todos') {
+      const hojeStr = dataHojeIsoLocal(agora);
+      
+      if (filtroVencimento === 'vencidos') {
+        filtradas = filtradas.filter((d) => d.prazo < hojeStr && d.status !== 'concluido');
+      } else if (filtroVencimento === 'hoje') {
+        filtradas = filtradas.filter((d) => d.prazo === hojeStr);
+      } else if (filtroVencimento === 'esta_semana') {
+        const diaSemana = agora.getDay();
+        const domingo = new Date(agora);
+        domingo.setDate(agora.getDate() - diaSemana);
+        const sabado = new Date(agora);
+        sabado.setDate(agora.getDate() + (6 - diaSemana));
+        const domStr = dataHojeIsoLocal(domingo);
+        const sabStr = dataHojeIsoLocal(sabado);
+        filtradas = filtradas.filter((d) => d.prazo >= domStr && d.prazo <= sabStr);
+      } else if (filtroVencimento === 'este_mes') {
+        const mesStr = hojeStr.slice(0, 7);
+        filtradas = filtradas.filter((d) => d.prazo.startsWith(mesStr));
+      } else if (filtroVencimento === 'personalizado') {
+        if (dataInicioFiltro) {
+          filtradas = filtradas.filter((d) => d.prazo >= dataInicioFiltro);
+        }
+        if (dataFimFiltro) {
+          filtradas = filtradas.filter((d) => d.prazo <= dataFimFiltro);
+        }
+      }
+    }
+
     if (filtroStatus !== 'todos') {
       filtradas = filtradas.filter((d) => d.status === filtroStatus);
     }
@@ -295,13 +340,14 @@ export default function App() {
 
     const ordenadas = [...filtradas].sort((a, b) => {
       if (a.status !== b.status) {
-        return a.status === 'andamento' ? -1 : 1;
+        if (a.status === 'concluido') return 1;
+        if (b.status === 'concluido') return -1;
       }
       return a.prazo.localeCompare(b.prazo);
     });
 
     return { demandas: ordenadas, meta: metaCalculada };
-  }, [todasDemandasRaw, filtroStatus, buscaAplicada]);
+  }, [todasDemandasRaw, filtroStatus, filtroVencimento, dataInicioFiltro, dataFimFiltro, buscaAplicada, aba]);
 
   const abrirNovaDemanda = () => {
     setDemandaEdicao(null);
@@ -528,6 +574,18 @@ export default function App() {
             </button>
             <button
               type="button"
+              onClick={() => setAba('vencimentos')}
+              className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 transition-all whitespace-nowrap ${
+                aba === 'vencimentos'
+                  ? 'bg-white text-blue-600 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              <CalendarDays className="h-3.5 w-3.5" />
+              <span>Vencimentos</span>
+            </button>
+            <button
+              type="button"
               onClick={() => setAba('api')}
               className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 transition-all whitespace-nowrap ${
                 aba === 'api'
@@ -581,7 +639,7 @@ export default function App() {
 
       {/* Conteúdo Principal */}
       <main className="relative z-10 mx-auto max-w-[1320px] space-y-6 px-4 py-7 sm:px-6 lg:px-8">
-        {aba === 'demandas' ? (
+        {aba === 'demandas' || aba === 'vencimentos' ? (
           <>
             {/* Cabeçalho exclusivo para o Relatório de Tarefas na Impressão */}
             <div className="hidden print:block border-b border-slate-300 pb-4 mb-4">
@@ -592,11 +650,12 @@ export default function App() {
                       <Layers className="h-4 w-4" />
                     </div>
                     <h1 className="text-xl font-bold text-slate-900">
-                      Radar de Demandas · Relatório de Tarefas
+                      Radar de Demandas · {aba === 'vencimentos' ? 'Relatório de Vencimentos' : 'Relatório de Tarefas'}
                     </h1>
                   </div>
                   <p className="mt-1 text-xs text-slate-600">
-                    Filtro: <strong className="text-slate-800">{filtroStatus === 'todos' ? 'Todas as Tarefas' : filtroStatus === 'andamento' ? 'Tarefas em Andamento' : 'Tarefas Concluídas'}</strong>
+                    Filtro Situação: <strong className="text-slate-800">{filtroStatus === 'todos' ? 'Todas' : filtroStatus === 'andamento' ? 'Em Andamento' : filtroStatus === 'pendente' ? 'Pendentes' : 'Concluídas'}</strong>
+                    {filtroVencimento !== 'todos' ? ` · Filtro Prazo: ${filtroVencimento}` : ''}
                     {buscaAplicada ? ` · Termo pesquisado: "${buscaAplicada}"` : ''}
                   </p>
                 </div>
@@ -612,15 +671,17 @@ export default function App() {
             <section className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between print:hidden">
               <div>
                 <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900 text-balance">
-                  Controle de Demandas Empresariais
+                  {aba === 'vencimentos' ? 'Painel de Vencimentos e Prazos' : 'Controle de Demandas Empresariais'}
                 </h1>
                 <p className="mt-1 text-sm text-slate-500">
-                  Acompanhe obrigações por Razão Social e CNPJ. Toda alteração fica salva na nuvem e aparece automaticamente para todos.
+                  {aba === 'vencimentos'
+                    ? 'Monitore e filtre demandas por data de vencimento (vencidas, hoje, semana, mês ou período).'
+                    : 'Acompanhe obrigações por Razão Social e CNPJ. Toda alteração fica salva na nuvem e aparece automaticamente para todos.'}
                 </p>
               </div>
 
               {/* Cards de Métricas no Estilo do Design System */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <button
                   type="button"
                   onClick={() => setFiltroStatus('todos')}
@@ -650,10 +711,28 @@ export default function App() {
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-slate-400">Andamento</span>
-                    <Clock className="h-4 w-4 text-amber-500" />
+                    <Clock className="h-4 w-4 text-blue-500" />
+                  </div>
+                  <div className="mt-2 font-display text-2xl font-bold tabular-nums text-blue-600">
+                    {meta.andamento}
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFiltroStatus('pendente')}
+                  className={`rounded-2xl border p-4 text-left transition-all shadow-xs ${
+                    filtroStatus === 'pendente'
+                      ? 'border-amber-300 bg-amber-50/50 ring-2 ring-amber-500/20'
+                      : 'border-slate-100 bg-white hover:border-slate-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-slate-400">Pendentes</span>
+                    <HelpCircle className="h-4 w-4 text-amber-500" />
                   </div>
                   <div className="mt-2 font-display text-2xl font-bold tabular-nums text-amber-600">
-                    {meta.andamento}
+                    {meta.pendente}
                   </div>
                 </button>
 
@@ -786,88 +865,210 @@ export default function App() {
               )}
             </section>
 
-            {/* Seção 3: Barra de Filtros por Situação & Campo de Busca */}
-            <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
-              <div className="flex flex-wrap items-center gap-3">
-                <div
-                  className="inline-flex items-center rounded-xl border border-slate-200/80 bg-white p-1 shadow-2xs"
-                  role="group"
-                  aria-label="Filtrar por situação"
-                >
-                  <button
-                    type="button"
-                    onClick={() => setFiltroStatus('todos')}
-                    className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all whitespace-nowrap shrink-0 ${
-                      filtroStatus === 'todos'
-                        ? 'bg-blue-600 text-white shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
+            {/* Seção 3: Barra de Filtros por Situação, Filtro de Vencimento & Campo de Busca */}
+            <section className="space-y-3 print:hidden">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div
+                    className="inline-flex items-center rounded-xl border border-slate-200/80 bg-white p-1 shadow-2xs"
+                    role="group"
+                    aria-label="Filtrar por situação"
                   >
-                    Todas ({meta.total})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFiltroStatus('andamento')}
-                    className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all whitespace-nowrap shrink-0 ${
-                      filtroStatus === 'andamento'
-                        ? 'bg-blue-600 text-white shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    Em Andamento ({meta.andamento})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFiltroStatus('concluido')}
-                    className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all whitespace-nowrap shrink-0 ${
-                      filtroStatus === 'concluido'
-                        ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    Concluídas ({meta.concluido})
-                  </button>
-                </div>
-
-                {avisoSalvo && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 animate-in fade-in duration-200">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                    {avisoSalvo}
-                  </span>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1 sm:w-80 sm:flex-initial">
-                  <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text"
-                    value={busca}
-                    onChange={(e) => setBusca(e.target.value)}
-                    placeholder="Buscar Razão Social, CNPJ ou demanda..."
-                    className="h-10 w-full rounded-xl border border-slate-200/80 bg-white pl-10 pr-9 text-xs text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none shadow-2xs transition-all"
-                  />
-                  {busca && (
                     <button
                       type="button"
-                      onClick={() => setBusca('')}
-                      aria-label="Limpar busca"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      onClick={() => setFiltroStatus('todos')}
+                      className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all whitespace-nowrap shrink-0 ${
+                        filtroStatus === 'todos'
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
                     >
-                      <X className="h-4 w-4" />
+                      Todas ({meta.total})
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setFiltroStatus('andamento')}
+                      className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all whitespace-nowrap shrink-0 ${
+                        filtroStatus === 'andamento'
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Em Andamento ({meta.andamento})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFiltroStatus('pendente')}
+                      className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all whitespace-nowrap shrink-0 ${
+                        filtroStatus === 'pendente'
+                          ? 'bg-amber-500 text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Pendentes ({meta.pendente})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFiltroStatus('concluido')}
+                      className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all whitespace-nowrap shrink-0 ${
+                        filtroStatus === 'concluido'
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Concluídas ({meta.concluido})
+                    </button>
+                  </div>
+
+                  {avisoSalvo && (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 animate-in fade-in duration-200">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                      {avisoSalvo}
+                    </span>
                   )}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleImprimirRelatorio}
-                  title="Imprimir relatório das tarefas listadas"
-                  className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-3.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-2xs transition-all whitespace-nowrap shrink-0"
-                >
-                  <Printer className="h-4 w-4 text-slate-500" />
-                  <span className="hidden sm:inline">Imprimir Relatório</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1 sm:w-80 sm:flex-initial">
+                    <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={busca}
+                      onChange={(e) => setBusca(e.target.value)}
+                      placeholder="Buscar Razão Social, CNPJ ou demanda..."
+                      className="h-10 w-full rounded-xl border border-slate-200/80 bg-white pl-10 pr-9 text-xs text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none shadow-2xs transition-all"
+                    />
+                    {busca && (
+                      <button
+                        type="button"
+                        onClick={() => setBusca('')}
+                        aria-label="Limpar busca"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleImprimirRelatorio}
+                    title="Imprimir relatório das tarefas listadas"
+                    className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-3.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-2xs transition-all whitespace-nowrap shrink-0"
+                  >
+                    <Printer className="h-4 w-4 text-slate-500" />
+                    <span className="hidden sm:inline">Imprimir Relatório</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Barra de Filtro de Vencimentos */}
+              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-100 bg-white p-2.5 shadow-2xs">
+                <div className="flex items-center gap-1.5 px-2 text-xs font-semibold text-slate-500">
+                  <Filter className="h-3.5 w-3.5 text-blue-600" />
+                  <span>Filtro de Vencimento:</span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setFiltroVencimento('todos')}
+                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+                      filtroVencimento === 'todos'
+                        ? 'bg-blue-600 text-white shadow-2xs'
+                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                    }`}
+                  >
+                    Todos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFiltroVencimento('vencidos')}
+                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+                      filtroVencimento === 'vencidos'
+                        ? 'bg-rose-600 text-white shadow-2xs'
+                        : 'text-slate-600 hover:bg-rose-50 hover:text-rose-700'
+                    }`}
+                  >
+                    Vencidos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFiltroVencimento('hoje')}
+                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+                      filtroVencimento === 'hoje'
+                        ? 'bg-amber-500 text-white shadow-2xs'
+                        : 'text-slate-600 hover:bg-amber-50 hover:text-amber-800'
+                    }`}
+                  >
+                    Vencem Hoje
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFiltroVencimento('esta_semana')}
+                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+                      filtroVencimento === 'esta_semana'
+                        ? 'bg-blue-600 text-white shadow-2xs'
+                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                    }`}
+                  >
+                    Esta Semana
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFiltroVencimento('este_mes')}
+                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+                      filtroVencimento === 'este_mes'
+                        ? 'bg-blue-600 text-white shadow-2xs'
+                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                    }`}
+                  >
+                    Este Mês
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFiltroVencimento('personalizado')}
+                    className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+                      filtroVencimento === 'personalizado'
+                        ? 'bg-blue-600 text-white shadow-2xs'
+                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                    }`}
+                  >
+                    Por Período
+                  </button>
+                </div>
+
+                {filtroVencimento === 'personalizado' && (
+                  <div className="flex flex-wrap items-center gap-2 pl-2 border-l border-slate-200">
+                    <span className="text-[11px] text-slate-500">De:</span>
+                    <input
+                      type="date"
+                      value={dataInicioFiltro}
+                      onChange={(e) => setDataInicioFiltro(e.target.value)}
+                      className="h-8 rounded-lg border border-slate-200 px-2 text-xs font-mono tabular-nums text-slate-800 focus:border-blue-500 focus:outline-none"
+                    />
+                    <span className="text-[11px] text-slate-500">Até:</span>
+                    <input
+                      type="date"
+                      value={dataFimFiltro}
+                      onChange={(e) => setDataFimFiltro(e.target.value)}
+                      className="h-8 rounded-lg border border-slate-200 px-2 text-xs font-mono tabular-nums text-slate-800 focus:border-blue-500 focus:outline-none"
+                    />
+                    {(dataInicioFiltro || dataFimFiltro) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDataInicioFiltro('');
+                          setDataFimFiltro('');
+                        }}
+                        className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                        title="Limpar período"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </section>
 

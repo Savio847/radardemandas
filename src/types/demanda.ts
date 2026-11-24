@@ -1,4 +1,4 @@
-export type DemandaStatus = 'andamento' | 'concluido';
+export type DemandaStatus = 'andamento' | 'pendente' | 'concluido';
 
 export type AlertaPiscar = 'vermelho_forte' | 'vermelho_fraco' | 'nenhum';
 
@@ -24,6 +24,7 @@ export interface DemandaComAlerta extends Demanda {
 export interface DemandasMeta {
   total: number;
   andamento: number;
+  pendente: number;
   concluido: number;
   vermelhoForte: number;
   vermelhoFraco: number;

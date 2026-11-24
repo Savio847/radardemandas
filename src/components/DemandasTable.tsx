@@ -4,6 +4,7 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  HelpCircle,
   Pencil,
   RotateCcw,
   Trash2,
@@ -254,6 +255,11 @@ export function DemandasTable({
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 print:bg-transparent print:p-0">
                     <CheckCircle2 className="h-3.5 w-3.5 shrink-0 print:hidden" />
                     Concluída
+                  </span>
+                ) : demanda.status === 'pendente' ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-600 print:bg-transparent print:p-0">
+                    <HelpCircle className="h-3.5 w-3.5 shrink-0 print:hidden" />
+                    Pendente
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-600 print:bg-transparent print:p-0">

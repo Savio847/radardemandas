@@ -84,7 +84,12 @@ function validarPayloadDemanda(payload: DemandaPayload): {
     truncarTexto(payload.responsavel || '', BLUEPRINT_LIMITS.MAX_RESPONSAVEL) ||
     'Equipe Operacional';
   const prazo = (payload.prazo || '').trim();
-  const status: DemandaStatus = payload.status === 'concluido' ? 'concluido' : 'andamento';
+  const status: DemandaStatus =
+    payload.status === 'concluido'
+      ? 'concluido'
+      : payload.status === 'pendente'
+        ? 'pendente'
+        : 'andamento';
 
   if (razaoSocial.length < BLUEPRINT_LIMITS.MIN_RAZAO_SOCIAL) {
     throw new Error('Informe a Razão Social da empresa (mínimo 2 caracteres).');
@@ -247,7 +252,13 @@ export function assinarDemandasEmTempoReal(
       const agoraIso = new Date().toISOString();
       const lista: Demanda[] = snapshot.docs.map((docSnap) => {
         const d = docSnap.data({ serverTimestamps: 'estimate' });
-        const status: DemandaStatus = d.status === 'concluido' ? 'concluido' : 'andamento';
+        const rawStatus = d.status;
+        const status: DemandaStatus =
+          rawStatus === 'concluido'
+            ? 'concluido'
+            : rawStatus === 'pendente'
+              ? 'pendente'
+              : 'andamento';
         return {
           id: docSnap.id,
           razaoSocial: typeof d.razaoSocial === 'string' ? d.razaoSocial : '',
