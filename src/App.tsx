@@ -12,7 +12,6 @@ import {
   CalendarPlus,
   CheckCircle2,
   Clock,
-  Code2,
   FileText,
   Filter,
   HelpCircle,
@@ -55,10 +54,9 @@ import {
 } from './services/demandasFirestore.ts';
 import { DemandasTable } from './components/DemandasTable.tsx';
 import { DemandaModal } from './components/DemandaModal.tsx';
-import { ApiExplorerView } from './components/ApiExplorerView.tsx';
 import { AuthGate } from './components/AuthGate.tsx';
 
-type AbaAtiva = 'demandas' | 'vencimentos' | 'api';
+type AbaAtiva = 'demandas' | 'vencimentos';
 type FiltroStatus = 'todos' | DemandaStatus;
 type FiltroVencimento = 'todos' | 'vencidos' | 'hoje' | 'esta_semana' | 'este_mes' | 'personalizado';
 
@@ -584,32 +582,10 @@ export default function App() {
               <CalendarDays className="h-3.5 w-3.5" />
               <span>Vencimentos</span>
             </button>
-            <button
-              type="button"
-              onClick={() => setAba('api')}
-              className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 transition-all whitespace-nowrap ${
-                aba === 'api'
-                  ? 'bg-white text-blue-600 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              <Code2 className="h-3.5 w-3.5" />
-              <span>API REST</span>
-            </button>
           </nav>
 
           {/* Ações do Topo */}
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handleImprimirRelatorio}
-              title="Imprimir relatório das tarefas listadas"
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900 whitespace-nowrap shrink-0 shadow-2xs"
-            >
-              <Printer className="h-4 w-4 text-slate-500" />
-              <span>Imprimir Relatório</span>
-            </button>
-
             <button
               type="button"
               onClick={abrirNovaDemanda}
@@ -639,33 +615,31 @@ export default function App() {
 
       {/* Conteúdo Principal */}
       <main className="relative z-10 mx-auto max-w-[1320px] space-y-6 px-4 py-7 sm:px-6 lg:px-8">
-        {aba === 'demandas' || aba === 'vencimentos' ? (
-          <>
-            {/* Cabeçalho exclusivo para o Relatório de Tarefas na Impressão */}
-            <div className="hidden print:block border-b border-slate-300 pb-4 mb-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-xs">
-                      <Layers className="h-4 w-4" />
-                    </div>
-                    <h1 className="text-xl font-bold text-slate-900">
-                      Radar de Demandas · {aba === 'vencimentos' ? 'Relatório de Vencimentos' : 'Relatório de Tarefas'}
-                    </h1>
-                  </div>
-                  <p className="mt-1 text-xs text-slate-600">
-                    Filtro Situação: <strong className="text-slate-800">{filtroStatus === 'todos' ? 'Todas' : filtroStatus === 'andamento' ? 'Em Andamento' : filtroStatus === 'pendente' ? 'Pendentes' : 'Concluídas'}</strong>
-                    {filtroVencimento !== 'todos' ? ` · Filtro Prazo: ${filtroVencimento}` : ''}
-                    {buscaAplicada ? ` · Termo pesquisado: "${buscaAplicada}"` : ''}
-                  </p>
+        {/* Cabeçalho exclusivo para o Relatório de Tarefas na Impressão */}
+        <div className="hidden print:block border-b border-slate-300 pb-4 mb-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-xs">
+                  <Layers className="h-4 w-4" />
                 </div>
-                <div className="text-right text-xs text-slate-600 space-y-0.5">
-                  <div>Data de emissão: <strong>{new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</strong></div>
-                  <div>Emitido por: <strong>{usuario.displayName || usuario.email}</strong></div>
-                  <div className="font-semibold text-slate-800">Total no relatório: {demandas.length} {demandas.length === 1 ? 'tarefa' : 'tarefas'}</div>
-                </div>
+                <h1 className="text-xl font-bold text-slate-900">
+                  Radar de Demandas · {aba === 'vencimentos' ? 'Relatório de Vencimentos' : 'Relatório de Tarefas'}
+                </h1>
               </div>
+              <p className="mt-1 text-xs text-slate-600">
+                Filtro Situação: <strong className="text-slate-800">{filtroStatus === 'todos' ? 'Todas' : filtroStatus === 'andamento' ? 'Em Andamento' : filtroStatus === 'pendente' ? 'Pendentes' : 'Concluídas'}</strong>
+                {filtroVencimento !== 'todos' ? ` · Filtro Prazo: ${filtroVencimento}` : ''}
+                {buscaAplicada ? ` · Termo pesquisado: "${buscaAplicada}"` : ''}
+              </p>
             </div>
+            <div className="text-right text-xs text-slate-600 space-y-0.5">
+              <div>Data de emissão: <strong>{new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</strong></div>
+              <div>Emitido por: <strong>{usuario.displayName || usuario.email}</strong></div>
+              <div className="font-semibold text-slate-800">Total no relatório: {demandas.length} {demandas.length === 1 ? 'tarefa' : 'tarefas'}</div>
+            </div>
+          </div>
+        </div>
 
             {/* Seção 1: Cabeçalho & Cards de Resumo / Filtros de Status */}
             <section className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between print:hidden">
@@ -1089,10 +1063,6 @@ export default function App() {
                 aoAbrirNova={abrirNovaDemanda}
               />
             )}
-          </>
-        ) : (
-          <ApiExplorerView />
-        )}
       </main>
 
       {/* Modal Completo de Cadastro / Edição */}
