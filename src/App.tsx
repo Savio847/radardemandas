@@ -12,6 +12,8 @@ import {
   CalendarPlus,
   CheckCircle2,
   Clock,
+  Download,
+  FileSpreadsheet,
   FileText,
   Filter,
   HelpCircle,
@@ -515,7 +517,33 @@ export default function App() {
     }
   };
 
-  const handleImprimirRelatorio = () => {
+  const handleExportarCsv = () => {
+    if (demandas.length === 0) return;
+    const cabecalho = ['Razão Social', 'CNPJ', 'Demanda', 'Responsável', 'Descrição', 'Vencimento', 'Prazo / Alerta', 'Situação'];
+    const linhas = demandas.map((d) => [
+      `"${(d.razaoSocial || '').replace(/"/g, '""')}"`,
+      `"${(d.cnpj || '').replace(/"/g, '""')}"`,
+      `"${(d.titulo || '').replace(/"/g, '""')}"`,
+      `"${(d.responsavel || '').replace(/"/g, '""')}"`,
+      `"${(d.descricao || '').replace(/"/g, '""')}"`,
+      `"${d.prazo || ''}"`,
+      `"${(d.alertaLabel || '').replace(/"/g, '""')}"`,
+      `"${d.status === 'concluido' ? 'Concluída' : d.status === 'pendente' ? 'Pendente' : 'Andamento'}"`,
+    ]);
+
+    const csvContent = '\uFEFF' + [cabecalho.join(';'), ...linhas.map((l) => l.join(';'))].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `demandas_${dataHojeIsoLocal(new Date())}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportarPdfA4 = () => {
     window.print();
   };
 
@@ -555,34 +583,6 @@ export default function App() {
               Radar de Demandas
             </a>
           </div>
-
-          {/* Navegação entre Abas */}
-          <nav className="flex items-center gap-2 rounded-xl bg-slate-100/80 p-1 text-xs font-semibold" aria-label="Navegação">
-            <button
-              type="button"
-              onClick={() => setAba('demandas')}
-              className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 transition-all whitespace-nowrap ${
-                aba === 'demandas'
-                  ? 'bg-white text-blue-600 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              <LayoutDashboard className="h-3.5 w-3.5" />
-              <span>Demandas</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setAba('vencimentos')}
-              className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 transition-all whitespace-nowrap ${
-                aba === 'vencimentos'
-                  ? 'bg-white text-blue-600 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              <CalendarDays className="h-3.5 w-3.5" />
-              <span>Vencimentos</span>
-            </button>
-          </nav>
 
           {/* Ações do Topo */}
           <div className="flex items-center gap-3">
@@ -924,15 +924,27 @@ export default function App() {
                     )}
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={handleImprimirRelatorio}
-                    title="Imprimir relatório das tarefas listadas"
-                    className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-3.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-2xs transition-all whitespace-nowrap shrink-0"
-                  >
-                    <Printer className="h-4 w-4 text-slate-500" />
-                    <span className="hidden sm:inline">Imprimir Relatório</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleExportarCsv}
+                      title="Exportar dados filtrados para planilha CSV"
+                      className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-2xs transition-all whitespace-nowrap shrink-0"
+                    >
+                      <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                      <span>Exportar CSV</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleExportarPdfA4}
+                      title="Exportar/Imprimir relatório em PDF no formato folha A4"
+                      className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-2xs transition-all whitespace-nowrap shrink-0"
+                    >
+                      <FileText className="h-4 w-4 text-rose-600" />
+                      <span>Exportar PDF folha A4</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 

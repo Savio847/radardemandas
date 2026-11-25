@@ -89,21 +89,21 @@ export function DemandasTable({
       <div role="rowgroup" className="hidden lg:block print:block">
         <div
           role="row"
-          className="grid grid-cols-12 items-center gap-4 border-b border-slate-100 bg-slate-50/70 px-6 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 print:border-slate-300 print:bg-slate-100 print:text-slate-700"
+          className="grid grid-cols-12 items-center gap-3 border-b border-slate-100 bg-slate-50/70 px-5 py-3.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 print:border-slate-300 print:bg-slate-100 print:text-slate-700"
         >
-          <div role="columnheader" className="col-span-3 print:col-span-4">
+          <div role="columnheader" className="col-span-3 print:col-span-3">
             Empresa · Razão Social e CNPJ
           </div>
-          <div role="columnheader" className="col-span-3 print:col-span-4">
+          <div role="columnheader" className="col-span-3 print:col-span-3">
             Demanda
           </div>
           <div role="columnheader" className="col-span-2 print:col-span-2">
             Vencimento
           </div>
-          <div role="columnheader" className="col-span-1 print:col-span-1">
+          <div role="columnheader" className="col-span-1 print:col-span-2">
             Prazo
           </div>
-          <div role="columnheader" className="col-span-1 print:col-span-1">
+          <div role="columnheader" className="col-span-1 print:col-span-2">
             Situação
           </div>
           <div role="columnheader" className="col-span-2 text-right print:hidden">
@@ -132,10 +132,10 @@ export function DemandasTable({
             <div
               key={demanda.id}
               role="row"
-              className={`grid grid-cols-1 items-center gap-3 rounded-xl px-5 py-3.5 text-sm transition-colors lg:grid-cols-12 print:grid-cols-12 lg:gap-4 print:py-2.5 ${rowAnimationClass}`}
+              className={`grid grid-cols-1 items-center gap-3 rounded-xl px-5 py-3.5 text-sm transition-colors lg:grid-cols-12 print:grid-cols-12 lg:gap-3 print:gap-2 print:py-2 print:border-b print:border-slate-100 ${rowAnimationClass}`}
             >
               {/* Razão Social e CNPJ */}
-              <div role="cell" className="flex items-center gap-3 lg:col-span-3 print:col-span-4">
+              <div role="cell" className="flex items-center gap-3 lg:col-span-3 print:col-span-3 min-w-0">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 font-semibold text-xs print:hidden">
                   {demanda.razaoSocial ? demanda.razaoSocial.charAt(0).toUpperCase() : <Building2 className="h-4 w-4" />}
                 </div>
@@ -158,7 +158,7 @@ export function DemandasTable({
               </div>
 
               {/* Demanda, Responsável e Observações */}
-              <div role="cell" className="min-w-0 lg:col-span-3 print:col-span-4">
+              <div role="cell" className="min-w-0 lg:col-span-3 print:col-span-3">
                 <div
                   className={`truncate font-medium ${
                     isConcluido ? 'text-slate-500' : 'text-slate-900'
@@ -214,14 +214,14 @@ export function DemandasTable({
               </div>
 
               {/* Prazo / Alertas */}
-              <div role="cell" className="whitespace-nowrap lg:col-span-1 print:col-span-1">
+              <div role="cell" className="whitespace-nowrap overflow-visible lg:col-span-1 print:col-span-2 min-w-0">
                 {isVermelhoForte && (
-                  <div className="flex items-center gap-1.5 text-rose-700">
+                  <div className="inline-flex items-center gap-1.5 text-rose-700">
                     <span
                       className="dot-blink-strong inline-block h-2 w-2 shrink-0 rounded-full print:hidden"
                       aria-hidden="true"
                     />
-                    <div className="flex items-center gap-1 text-xs font-semibold">
+                    <div className="flex items-center gap-1 text-xs font-semibold whitespace-nowrap">
                       <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-rose-600 print:hidden" />
                       <span>{demanda.alertaLabel}</span>
                     </div>
@@ -229,18 +229,18 @@ export function DemandasTable({
                 )}
 
                 {isVermelhoFraco && (
-                  <div className="flex items-center gap-1.5 text-amber-700">
+                  <div className="inline-flex items-center gap-1.5 text-amber-700">
                     <span
                       className="dot-blink-soft inline-block h-2 w-2 shrink-0 rounded-full print:hidden"
                       aria-hidden="true"
                     />
-                    <span className="text-xs font-semibold">{demanda.alertaLabel}</span>
+                    <span className="text-xs font-semibold whitespace-nowrap">{demanda.alertaLabel}</span>
                   </div>
                 )}
 
                 {!isVermelhoForte && !isVermelhoFraco && (
                   <span
-                    className={`text-xs ${
+                    className={`inline-block text-xs whitespace-nowrap ${
                       isConcluido ? 'font-medium text-emerald-700' : 'text-slate-500'
                     }`}
                   >
@@ -250,21 +250,21 @@ export function DemandasTable({
               </div>
 
               {/* Situação */}
-              <div role="cell" className="whitespace-nowrap lg:col-span-1 print:col-span-1">
+              <div role="cell" className="whitespace-nowrap overflow-visible lg:col-span-1 print:col-span-2 min-w-0">
                 {isConcluido ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 print:bg-transparent print:p-0">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-600 whitespace-nowrap print:bg-transparent print:p-0">
                     <CheckCircle2 className="h-3.5 w-3.5 shrink-0 print:hidden" />
-                    Concluída
+                    <span>Concluída</span>
                   </span>
                 ) : demanda.status === 'pendente' ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-600 print:bg-transparent print:p-0">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-600 whitespace-nowrap print:bg-transparent print:p-0">
                     <HelpCircle className="h-3.5 w-3.5 shrink-0 print:hidden" />
-                    Pendente
+                    <span>Pendente</span>
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-600 print:bg-transparent print:p-0">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-600 whitespace-nowrap print:bg-transparent print:p-0">
                     <Clock className="h-3 w-3 shrink-0 print:hidden" />
-                    Andamento
+                    <span>Andamento</span>
                   </span>
                 )}
               </div>

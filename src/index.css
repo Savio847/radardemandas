@@ -69,3 +69,16 @@
   animation: accountingFloatC 12s ease-in-out infinite;
   will-change: transform;
 }
+
+@page {
+  size: A4 portrait;
+  margin: 12mm 10mm;
+}
+
+@media print {
+  html, body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 11px !important;
+  }
+}
